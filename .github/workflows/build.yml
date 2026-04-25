@@ -47,6 +47,8 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: build
+    outputs:
+      version: ${{ needs.build.outputs.version }}
 
     steps:
       - name: Checkout code
@@ -61,13 +63,13 @@ jobs:
           context: .
           push: false
           load: true
-          tags: telepathy/akasha:${{ needs.build.outputs.version }}
+          tags: ghcr.io/telepathy/akasha:${{ needs.build.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Save Docker image
         run: |
-          docker save -o akasha-${{ needs.build.outputs.version }}.tar telepathy/akasha:${{ needs.build.outputs.version }}
+          docker save -o akasha-${{ needs.build.outputs.version }}.tar ghcr.io/telepathy/akasha:${{ needs.build.outputs.version }}
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@v4
