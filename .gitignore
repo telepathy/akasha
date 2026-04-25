@@ -1,0 +1,24 @@
+# bin
+bin/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+# Build
+*.exe
+*.exe~
+akasha
+akasha.tar
+server
+
+# Go
+go.mod
+go.sum
+vendor/
+!.gitkeep
