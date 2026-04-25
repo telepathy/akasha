@@ -2,6 +2,36 @@ const API_BASE = '/api/v1';
 let currentBranch = '';
 let currentBranchStatus = '';
 
+function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+    } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    }
+    updateThemeToggle();
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateThemeToggle();
+}
+
+function updateThemeToggle() {
+    const btn = document.getElementById('themeToggle');
+    if (btn) {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        btn.textContent = isDark ? '☀️' : '🌙';
+        btn.title = isDark ? '切换到亮色模式' : '切换到暗色模式';
+    }
+}
+
+initTheme();
+
 async function loadBranches() {
     try {
         const res = await fetch(API_BASE + '/branches');
