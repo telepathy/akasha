@@ -74,12 +74,9 @@ function renderDepList(deps) {
     const list = document.getElementById('depList');
     if (!list) return;
     if (deps.length === 0) { list.innerHTML = '暂无依赖'; return; }
-    const canEdit = currentBranchStatus === 'active';
-    list.innerHTML = '<table class="table"><thead><tr><th>Group ID</th><th>Artifact ID</th><th>Version</th><th></th></tr></thead><tbody>' +
-        deps.map(d => `<tr><td>${d.groupId}</td><td>${d.artifact}</td><td>${d.version}</td><td class="btn-group">
-            <button class="btn-xs" onclick="viewHistory('${d.name}')">历史</button>
-            ${canEdit ? `<button class="btn-xs" onclick="editDep('${d.name}')">编辑</button>` : ''}
-        </td></tr>`).join('') + '</tbody></table>';
+    // 首页只显示列表，不显示操作按钮（操作在分支管理页面进行）
+    list.innerHTML = '<table class="table"><thead><tr><th>Group ID</th><th>Artifact ID</th><th>Version</th></tr></thead><tbody>' +
+        deps.map(d => `<tr><td>${d.groupId}</td><td>${d.artifact}</td><td>${d.version}</td></tr>`).join('') + '</tbody></table>';
 }
 
 function showModal(content) {
