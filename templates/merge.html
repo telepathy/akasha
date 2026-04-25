@@ -5,313 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分支合并 - Akasha</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <style>
-        .merge-header {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: #fff;
-            padding: 32px;
-            border-radius: 16px;
-            margin-bottom: 32px;
-        }
-        .merge-header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-        .merge-header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        .merge-config {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 24px;
-            align-items: end;
-            margin-bottom: 32px;
-        }
-        .branch-group {
-            background: #fff;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .branch-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
-            margin-bottom: 12px;
-        }
-        .branch-group select {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.2s;
-            background: #f8fafc;
-        }
-        .branch-group select:focus {
-            outline: none;
-            border-color: #f5576c;
-            box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.1);
-        }
-        .merge-arrow {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 50%;
-            font-size: 24px;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-        .strategy-section {
-            background: #fff;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            margin-bottom: 32px;
-        }
-        .strategy-section h3 {
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            margin-bottom: 16px;
-        }
-        .strategy-options {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .strategy-btn {
-            padding: 12px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            background: #fff;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            color: #374151;
-        }
-        .strategy-btn:hover {
-            border-color: #f5576c;
-            color: #f5576c;
-            background: #fef2f2;
-        }
-        .strategy-btn.active {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-color: transparent;
-            color: #fff;
-        }
-        .strategy-btn .icon {
-            margin-right: 8px;
-        }
-        .options-row {
-            display: flex;
-            gap: 24px;
-            margin-top: 20px;
-        }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #f5576c;
-        }
-        .checkbox-group label {
-            font-size: 14px;
-            color: #374151;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-        .preview-btn {
-            padding: 14px 32px;
-            background: #fff;
-            color: #f5576c;
-            border: 2px solid #f5576c;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .preview-btn:hover {
-            background: #fef2f2;
-        }
-        .execute-btn {
-            padding: 14px 32px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .execute-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
-        }
-        .execute-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .result-section {
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            overflow: hidden;
-        }
-        .result-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .result-header h3 {
-            font-size: 16px;
-            font-weight: 600;
-        }
-        .result-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .badge-preview {
-            background: #fef3c7;
-            color: #d97706;
-        }
-        .badge-executed {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-        .result-stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            padding: 20px 24px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .stat-card {
-            text-align: center;
-            padding: 16px;
-            border-radius: 12px;
-            background: #f8fafc;
-        }
-        .stat-card .number {
-            font-size: 32px;
-            font-weight: 700;
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-        .stat-card .label {
-            font-size: 12px;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .stat-added .number { color: #10b981; }
-        .stat-updated .number { color: #3b82f6; }
-        .stat-skipped .number { color: #6b7280; }
-        .stat-conflicts .number { color: #ef4444; }
-        .result-details {
-            padding: 20px 24px;
-        }
-        .result-details h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 16px;
-        }
-        .detail-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .detail-item {
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 13px;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-        }
-        .detail-added {
-            background: #f0fdf4;
-            color: #16a34a;
-        }
-        .detail-updated {
-            background: #eff6ff;
-            color: #3b82f6;
-        }
-        .detail-skipped {
-            background: #f9fafb;
-            color: #6b7280;
-        }
-        .conflict-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .conflict-table th {
-            background: #fef2f2;
-            padding: 12px 16px;
-            text-align: left;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #dc2626;
-        }
-        .conflict-table td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #fecaca;
-            font-size: 13px;
-        }
-        .conflict-reason {
-            color: #dc2626;
-            font-weight: 500;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #64748b;
-        }
-        .empty-state .icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 40px;
-            color: #f5576c;
-        }
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #e5e7eb;
-            border-top-color: #f5576c;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
 </head>
 <body>
     <div id="app">
@@ -383,7 +76,7 @@
                 <div class="empty-state">
                     <div class="icon">🔀</div>
                     <p>选择分支并预览合并结果</p>
-                    <p style="font-size:14px; color:#94a3b8;">预览不会修改数据，可安全查看</p>
+                    <p style="font-size:14px;">预览不会修改数据，可安全查看</p>
                 </div>
             </div>
         </main>
@@ -470,7 +163,7 @@
                         <div class="empty-state">
                             <div class="icon">❌</div>
                             <p>预览失败</p>
-                            <p style="font-size:14px; color:#94a3b8;">${data.error}</p>
+                            <p style="font-size:14px;">${data.error}</p>
                         </div>
                     `;
                     return;
@@ -484,7 +177,7 @@
                     <div class="empty-state">
                         <div class="icon">❌</div>
                         <p>请求失败</p>
-                        <p style="font-size:14px; color:#94a3b8;">${e.message}</p>
+                        <p style="font-size:14px;">${e.message}</p>
                     </div>
                 `;
             }
@@ -527,7 +220,7 @@
                         <div class="empty-state">
                             <div class="icon">❌</div>
                             <p>合并失败</p>
-                            <p style="font-size:14px; color:#94a3b8;">${data.error}</p>
+                            <p style="font-size:14px;">${data.error}</p>
                         </div>
                     `;
                     return;
@@ -541,7 +234,7 @@
                     <div class="empty-state">
                         <div class="icon">❌</div>
                         <p>请求失败</p>
-                        <p style="font-size:14px; color:#94a3b8;">${e.message}</p>
+                        <p style="font-size:14px;">${e.message}</p>
                     </div>
                 `;
             }
