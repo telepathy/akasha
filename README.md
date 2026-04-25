@@ -22,6 +22,8 @@ make run
 
 - Web UI: http://localhost:8080
 - 分支管理: http://localhost:8080/branches
+- 分支比较: http://localhost:8080/compare
+- 分支合并: http://localhost:8080/merge
 - Gradle 输出: http://localhost:8080/dependency?branch=main
 
 ## 技术栈
@@ -35,7 +37,75 @@ make run
 - **分支管理**: 创建、锁定/解锁、删除
 - **依赖管理**: GAV 版本管理、版本历史
 - **时间查询**: 变更历史查询、闪回查询
+- **分支比较**: 对比两个分支的依赖差异
+- **分支合并**: 支持多种策略的依赖合并
 - **Gradle 输出**: dependency.gradle 格式
+
+## 分支合并策略
+
+### 策略类型
+
+| 策略 | 说明 | 适用场景 |
+|------|------|----------|
+| `keep_higher` | 保留较高版本（默认） | 常规合并，确保版本只升不降 |
+| `force_source` | 强制使用源分支版本 | 源分支是权威来源 |
+| `force_target` | 保留目标分支版本 | 仅添加缺失依赖 |
+
+### 合并规则
+
+| 源分支 | 目标分支 | 处理方式 |
+|--------|----------|----------|
+| 有依赖X v2.0 | 有依赖X v1.0 | 按策略处理（默认升级） |
+| 有依赖X v1.0 | 有依赖X v2.0 | 按策略处理（默认跳过，视为冲突） |
+| 有依赖X | 无依赖X | 可选添加（addMissing=true） |
+| 无依赖X | 有依赖X | **视为冲突**（可能被误删） |
+
+### API
+
+```bash
+# 预览合并
+POST /api/v1/branches/{source}/merge
+{
+    "targetBranch": "main",
+    "strategy": "keep_higher",
+    "addMissing": true,
+    "dryRun": true
+}
+
+# 执行合并
+POST /api/v1/branches/{source}/merge
+{
+    "targetBranch": "main",
+    "strategy": "keep_higher",
+    "addMissing": true,
+    "dryRun": false
+}
+```
+
+### 响应格式
+
+```json
+{
+    "preview": true,
+    "result": {
+        "added": 5,
+        "updated": 3,
+        "skipped": 12,
+        "conflicts": [
+            {
+                "name": "spring-core",
+                "sourceVersion": "6.1.0",
+                "targetVersion": "6.2.0",
+                "reason": "目标版本更高"
+            }
+        ],
+        "details": [
+            "添加: new-lib 1.0.0",
+            "更新: spring-core 5.3.0 -> 6.1.0"
+        ]
+    }
+}
+```
 
 ## 命令
 

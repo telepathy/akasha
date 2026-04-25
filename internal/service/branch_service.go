@@ -33,7 +33,6 @@ func (s *BranchService) Create(name, baseBranch string) error {
 }
 
 func (s *BranchService) Delete(name string) error {
-	// Soft delete: mark branch as deleted
 	return s.branchRepo.UpdateStatus(name, "deleted")
 }
 
@@ -46,12 +45,10 @@ func (s *BranchService) IsDeleted(name string) bool {
 }
 
 func (s *BranchService) Archive(name string) error {
-	// Archive: mark branch as archived (locked), content frozen but still accessible
 	return s.branchRepo.UpdateStatus(name, "archived")
 }
 
 func (s *BranchService) Unlock(name string) error {
-	// Unlock: change archived branch back to active
 	return s.branchRepo.UpdateStatus(name, "active")
 }
 
@@ -68,39 +65,168 @@ func (s *BranchService) CanModify(name string) bool {
 	if err != nil {
 		return false
 	}
-	// Only active branches can be modified
 	return branch.Status == "active"
 }
 
-func (s *BranchService) Merge(fromBranch, toBranch string) error {
-	fromDeps, err := s.depRepo.FindLatestByBranch(fromBranch)
-	if err != nil {
-		return err
-	}
+type MergeStrategy string
 
-	for _, fromDep := range fromDeps {
-		toDep, err := s.depRepo.FindByNameAndBranch(fromDep.Name, toBranch)
-		if err != nil {
-			continue
-		}
-		if CompareVersion(fromDep.Version, toDep.Version) > 0 {
-			fromDep.ID = 0
-			fromDep.Branch = toBranch
-			if err := s.depRepo.Create(&fromDep); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+const (
+	MergeKeepHigher   MergeStrategy = "keep_higher"
+	MergeForceSource  MergeStrategy = "force_source"
+	MergeForceTarget  MergeStrategy = "force_target"
+)
+
+type MergeConfig struct {
+	SourceBranch string        `json:"sourceBranch"`
+	TargetBranch string        `json:"targetBranch"`
+	Strategy     MergeStrategy `json:"strategy"`
+	AddMissing   bool          `json:"addMissing"`
+	DryRun       bool          `json:"dryRun"`
 }
 
-// History 获取分支的历史变更记录（基于依赖的历史）
+type MergeConflict struct {
+	Name        string `json:"name"`
+	SourceCoord string `json:"sourceCoord"`
+	TargetCoord string `json:"targetCoord"`
+	SourceVer   string `json:"sourceVersion"`
+	TargetVer   string `json:"targetVersion"`
+	Reason      string `json:"reason"`
+}
+
+type MergeResult struct {
+	Added     int            `json:"added"`
+	Updated   int            `json:"updated"`
+	Skipped   int            `json:"skipped"`
+	Conflicts []MergeConflict `json:"conflicts"`
+	Details   []string       `json:"details"`
+}
+
+func (s *BranchService) PreviewMerge(config MergeConfig) (*MergeResult, error) {
+	return s.executeMerge(config, true)
+}
+
+func (s *BranchService) ExecuteMerge(config MergeConfig) (*MergeResult, error) {
+	return s.executeMerge(config, false)
+}
+
+func (s *BranchService) executeMerge(config MergeConfig, dryRun bool) (*MergeResult, error) {
+	sourceDeps, err := s.depRepo.FindLatestByBranch(config.SourceBranch)
+	if err != nil {
+		return nil, err
+	}
+
+	targetDeps, err := s.depRepo.FindLatestByBranch(config.TargetBranch)
+	if err != nil {
+		return nil, err
+	}
+
+	sourceMap := make(map[string]domain.Dependency)
+	for _, dep := range sourceDeps {
+		sourceMap[dep.Name] = dep
+	}
+
+	targetMap := make(map[string]domain.Dependency)
+	for _, dep := range targetDeps {
+		targetMap[dep.Name] = dep
+	}
+
+	result := &MergeResult{}
+
+	for name, sourceDep := range sourceMap {
+		targetDep, exists := targetMap[name]
+
+		if !exists {
+			if config.AddMissing {
+				result.Added++
+				result.Details = append(result.Details, "添加: "+name+" "+sourceDep.Version)
+				if !dryRun {
+					newDep := sourceDep
+					newDep.ID = 0
+					newDep.Branch = config.TargetBranch
+					if err := s.depRepo.Create(&newDep); err != nil {
+						return nil, err
+					}
+				}
+			} else {
+				result.Skipped++
+				result.Details = append(result.Details, "跳过(目标无此依赖): "+name)
+			}
+			continue
+		}
+
+		if sourceDep.Version == targetDep.Version {
+			result.Skipped++
+			continue
+		}
+
+		cmp := CompareVersion(sourceDep.Version, targetDep.Version)
+
+		switch config.Strategy {
+		case MergeForceSource:
+			result.Updated++
+			result.Details = append(result.Details, "更新(强制源): "+name+" "+targetDep.Version+" -> "+sourceDep.Version)
+			if !dryRun {
+				newDep := sourceDep
+				newDep.ID = 0
+				newDep.Branch = config.TargetBranch
+				if err := s.depRepo.Create(&newDep); err != nil {
+					return nil, err
+				}
+			}
+
+		case MergeForceTarget:
+			result.Skipped++
+			result.Details = append(result.Details, "跳过(保留目标): "+name)
+
+		case MergeKeepHigher:
+			if cmp > 0 {
+				result.Updated++
+				result.Details = append(result.Details, "更新(源更高): "+name+" "+targetDep.Version+" -> "+sourceDep.Version)
+				if !dryRun {
+					newDep := sourceDep
+					newDep.ID = 0
+					newDep.Branch = config.TargetBranch
+					if err := s.depRepo.Create(&newDep); err != nil {
+						return nil, err
+					}
+				}
+			} else {
+				result.Conflicts = append(result.Conflicts, MergeConflict{
+					Name:        name,
+					SourceCoord: sourceDep.MavenCoord(),
+					TargetCoord: targetDep.MavenCoord(),
+					SourceVer:   sourceDep.Version,
+					TargetVer:   targetDep.Version,
+					Reason:      "目标版本更高",
+				})
+			}
+
+		default:
+			result.Skipped++
+		}
+	}
+
+	for name, targetDep := range targetMap {
+		if _, exists := sourceMap[name]; !exists {
+			result.Conflicts = append(result.Conflicts, MergeConflict{
+				Name:        name,
+				SourceCoord: "",
+				TargetCoord: targetDep.MavenCoord(),
+				SourceVer:   "",
+				TargetVer:   targetDep.Version,
+				Reason:      "源分支无此依赖，可能被误删",
+			})
+		}
+	}
+
+	return result, nil
+}
+
 func (s *BranchService) History(name string) (map[string][]domain.Dependency, error) {
 	deps, err := s.depRepo.FindLatestByBranch(name)
 	if err != nil {
 		return nil, err
 	}
-	// 返回每个依赖的历史
 	result := make(map[string][]domain.Dependency)
 	for _, dep := range deps {
 		history, err := s.depRepo.FindHistory(dep.Name, name)
