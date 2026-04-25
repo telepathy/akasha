@@ -32,6 +32,10 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		c.HTML(http.StatusOK, "compare.html", nil)
 	})
 
+	r.GET("/merge", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "merge.html", nil)
+	})
+
 	r.GET("/dependencies", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", nil)
 	})

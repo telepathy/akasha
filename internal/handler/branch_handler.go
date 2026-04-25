@@ -72,16 +72,53 @@ func (h *BranchHandler) Merge(c *gin.Context) {
 	name := c.Param("name")
 	var req struct {
 		TargetBranch string `json:"targetBranch" binding:"required"`
+		Strategy     string `json:"strategy"`
+		AddMissing   bool   `json:"addMissing"`
+		DryRun       bool   `json:"dryRun"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.svc.Merge(name, req.TargetBranch); err != nil {
+
+	strategy := service.MergeKeepHigher
+	switch req.Strategy {
+	case "force_source":
+		strategy = service.MergeForceSource
+	case "force_target":
+		strategy = service.MergeForceTarget
+	}
+
+	config := service.MergeConfig{
+		SourceBranch: name,
+		TargetBranch: req.TargetBranch,
+		Strategy:     strategy,
+		AddMissing:   req.AddMissing,
+		DryRun:       req.DryRun,
+	}
+
+	if req.DryRun {
+		result, err := h.svc.PreviewMerge(config)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"preview": true,
+			"result":  result,
+		})
+		return
+	}
+
+	result, err := h.svc.ExecuteMerge(config)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "merged"})
+	c.JSON(http.StatusOK, gin.H{
+		"preview": false,
+		"result":  result,
+	})
 }
 
 func (h *BranchHandler) Archive(c *gin.Context) {
