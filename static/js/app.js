@@ -102,11 +102,12 @@ function renderBranchTable(branches) {
     window.branches = branches;
     if (branches.length === 0) { table.innerHTML = '<tr><td colspan="6">暂无分支</td></tr>'; return; }
     table.innerHTML = branches.map(b => `<tr>
-        <td class="branch-name" onclick="viewBranch('${b.name}')">${b.name}</td>
+        <td>${b.name}</td>
         <td>${b.baseBranch || '-'}</td>
         <td><span class="status-tag status-${b.status}">${b.status}</span></td>
         <td>${new Date(b.createdAt).toLocaleString()}</td>
         <td class="btn-group">
+            <button class="btn-xs" onclick="viewBranchDeps('${b.name}')">查看</button>
             ${b.status === 'active' ? `<button class="btn-xs" onclick="showAddGav('${b.name}')">+GAV</button>` : ''}
             <button class="btn-xs" onclick="viewBranchHistory('${b.name}')">变更</button>
             <button class="btn-xs" onclick="showFlashback('${b.name}')">闪回</button>
@@ -124,6 +125,10 @@ function viewBranch(name) {
         if (deps.length === 0) { div.innerHTML = '暂无依赖'; return; }
         div.innerHTML = '<table class="table"><thead><tr><th>Group</th><th>Artifact</th><th>Version</th></tr></thead><tbody>' + deps.map(d => `<tr><td>${d.groupId}</td><td>${d.artifact}</td><td>${d.version}</td></tr>`).join('') + '</tbody></table>';
     });
+}
+
+function viewBranchDeps(name) {
+    window.open('/api/v1/branches/' + name + '/deps-text', '_blank');
 }
 
 function viewBranchHistory(name) {

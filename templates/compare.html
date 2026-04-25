@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分支比较 - Akasha</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .compare-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+        }
+        .compare-header h1 {
+            font-size: 28px;
+            margin-bottom: 24px;
+        }
+        .branch-selectors {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .branch-select-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .branch-select-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        .branch-select-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 15px;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .branch-select-group select:hover {
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.25);
+        }
+        .branch-select-group select option {
+            background: #333;
+            color: #fff;
+        }
+        .compare-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            font-size: 20px;
+            margin-top: 24px;
+            flex-shrink: 0;
+        }
+        .compare-btn {
+            padding: 14px 32px;
+            background: #fff;
+            color: #667eea;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 24px;
+            flex-shrink: 0;
+        }
+        .compare-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .compare-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .summary-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .summary-card:hover {
+            transform: translateY(-4px);
+        }
+        .summary-card .number {
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .summary-card .label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+        .card-added { border-top: 4px solid #10b981; }
+        .card-added .number { color: #10b981; }
+        .card-removed { border-top: 4px solid #ef4444; }
+        .card-removed .number { color: #ef4444; }
+        .card-modified { border-top: 4px solid #f59e0b; }
+        .card-modified .number { color: #f59e0b; }
+        .card-unchanged { border-top: 4px solid #6b7280; }
+        .card-unchanged .number { color: #6b7280; }
+        .diff-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #666;
+        }
+        .filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .filter-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: #fff;
+        }
+        .diff-table-wrapper {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .diff-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .diff-table th {
+            background: #f8fafc;
+            padding: 16px 20px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .diff-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+        .diff-table tbody tr {
+            transition: background 0.15s;
+        }
+        .diff-table tbody tr:hover {
+            background: #f8fafc;
+        }
+        .diff-row-added {
+            background: #f0fdf4;
+        }
+        .diff-row-added:hover {
+            background: #dcfce7 !important;
+        }
+        .diff-row-removed {
+            background: #fef2f2;
+        }
+        .diff-row-removed:hover {
+            background: #fee2e2 !important;
+        }
+        .diff-row-modified {
+            background: #fffbeb;
+        }
+        .diff-row-modified:hover {
+            background: #fef3c7 !important;
+        }
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-added {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .badge-removed {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .badge-modified {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .badge-unchanged {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .coord {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 13px;
+            padding: 4px 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .coord-empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .arrow-icon {
+            color: #94a3b8;
+            margin: 0 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 40px;
+            color: #667eea;
+        }
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .version-change {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .version-old {
+            text-decoration: line-through;
+            color: #ef4444;
+            opacity: 0.7;
+        }
+        .version-new {
+            color: #10b981;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <aside class="sidebar">
+            <div class="logo">📦 Akasha</div>
+            <nav class="nav">
+                <a href="/" class="nav-item">首页</a>
+                <a href="/branches" class="nav-item">分支管理</a>
+                <a href="/compare" class="nav-item active">分支比较</a>
+            </nav>
+        </aside>
+        <main class="main">
+            <div class="compare-header">
+                <h1>分支比较</h1>
+                <div class="branch-selectors">
+                    <div class="branch-select-group">
+                        <label>源分支</label>
+                        <select id="sourceBranch">
+                            <option value="">选择分支...</option>
+                        </select>
+                    </div>
+                    <div class="compare-arrow">→</div>
+                    <div class="branch-select-group">
+                        <label>目标分支</label>
+                        <select id="targetBranch">
+                            <option value="">选择分支...</option>
+                        </select>
+                    </div>
+                    <button class="compare-btn" onclick="startCompare()" id="compareBtn" disabled>
+                        开始比较
+                    </button>
+                </div>
+            </div>
+            
+            <div id="resultArea">
+                <div class="empty-state">
+                    <div class="icon">🔀</div>
+                    <p>选择两个分支开始比较</p>
+                    <p style="font-size:14px; color:#94a3b8;">查看依赖版本差异</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let branches = [];
+        
+        async function loadBranches() {
+            try {
+                const resp = await fetch('/api/v1/branches');
+                branches = await resp.json();
+                const activeBranches = branches.filter(b => b.status !== 'deleted');
+                
+                const sourceSelect = document.getElementById('sourceBranch');
+                const targetSelect = document.getElementById('targetBranch');
+                
+                activeBranches.forEach(b => {
+                    sourceSelect.add(new Option(b.name, b.name));
+                    targetSelect.add(new Option(b.name, b.name));
+                });
+                
+                if (activeBranches.length >= 2) {
+                    sourceSelect.value = activeBranches[0].name;
+                    targetSelect.value = activeBranches[1].name;
+                    updateCompareBtn();
+                }
+            } catch (e) {
+                console.error('Failed to load branches:', e);
+            }
+        }
+        
+        function updateCompareBtn() {
+            const source = document.getElementById('sourceBranch').value;
+            const target = document.getElementById('targetBranch').value;
+            document.getElementById('compareBtn').disabled = !source || !target || source === target;
+        }
+        
+        document.getElementById('sourceBranch').addEventListener('change', updateCompareBtn);
+        document.getElementById('targetBranch').addEventListener('change', updateCompareBtn);
+        
+        async function startCompare() {
+            const source = document.getElementById('sourceBranch').value;
+            const target = document.getElementById('targetBranch').value;
+            
+            if (!source || !target || source === target) return;
+            
+            const resultArea = document.getElementById('resultArea');
+            resultArea.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span>正在比较分支...</span>
+                </div>
+            `;
+            
+            try {
+                const resp = await fetch(`/api/v1/dependencies/compare?source=${source}&target=${target}`);
+                const data = await resp.json();
+                renderDiff(data);
+            } catch (e) {
+                resultArea.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">❌</div>
+                        <p>比较失败</p>
+                        <p style="font-size:14px; color:#94a3b8;">${e.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderDiff(data) {
+            const resultArea = document.getElementById('resultArea');
+            const { diffs, summary } = data;
+            
+            let html = `
+                <div class="summary-cards">
+                    <div class="summary-card card-added">
+                        <div class="number">${summary.added}</div>
+                        <div class="label">新增</div>
+                    </div>
+                    <div class="summary-card card-removed">
+                        <div class="number">${summary.removed}</div>
+                        <div class="label">移除</div>
+                    </div>
+                    <div class="summary-card card-modified">
+                        <div class="number">${summary.modified}</div>
+                        <div class="label">修改</div>
+                    </div>
+                    <div class="summary-card card-unchanged">
+                        <div class="number">${summary.unchanged}</div>
+                        <div class="label">无变化</div>
+                    </div>
+                </div>
+                
+                <div class="diff-filters">
+                    <button class="filter-btn active" onclick="filterDiffs('all', this)">全部 (${summary.total})</button>
+                    <button class="filter-btn" onclick="filterDiffs('added', this)">新增 (${summary.added})</button>
+                    <button class="filter-btn" onclick="filterDiffs('removed', this)">移除 (${summary.removed})</button>
+                    <button class="filter-btn" onclick="filterDiffs('modified', this)">修改 (${summary.modified})</button>
+                    <button class="filter-btn" onclick="filterDiffs('unchanged', this)">无变化 (${summary.unchanged})</button>
+                </div>
+                
+                <div class="diff-table-wrapper">
+                    <table class="diff-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">类型</th>
+                                <th style="width: 200px;">依赖名称</th>
+                                <th>${data.sourceBranch}</th>
+                                <th></th>
+                                <th>${data.targetBranch}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="diffBody">
+            `;
+            
+            const sortedDiffs = [...diffs].sort((a, b) => {
+                const order = { modified: 0, added: 1, removed: 2, unchanged: 3 };
+                return order[a.type] - order[b.type] || a.name.localeCompare(b.name);
+            });
+            
+            sortedDiffs.forEach(diff => {
+                const rowClass = diff.type !== 'unchanged' ? `diff-row-${diff.type}` : '';
+                const badgeClass = `badge-${diff.type}`;
+                const typeLabels = { added: '新增', removed: '移除', modified: '修改', unchanged: '无变化' };
+                const typeIcons = { added: '+', removed: '-', modified: '~', unchanged: '=' };
+                
+                let coordHtml = '';
+                if (diff.type === 'modified') {
+                    coordHtml = `
+                        <td><span class="coord">${diff.sourceCoord}</span></td>
+                        <td><span class="arrow-icon">→</span></td>
+                        <td><span class="coord">${diff.targetCoord}</span></td>
+                    `;
+                } else if (diff.type === 'added') {
+                    coordHtml = `
+                        <td><span class="coord coord-empty">-</span></td>
+                        <td><span class="arrow-icon">→</span></td>
+                        <td><span class="coord">${diff.targetCoord}</span></td>
+                    `;
+                } else if (diff.type === 'removed') {
+                    coordHtml = `
+                        <td><span class="coord">${diff.sourceCoord}</span></td>
+                        <td><span class="arrow-icon">→</span></td>
+                        <td><span class="coord coord-empty">-</span></td>
+                    `;
+                } else {
+                    coordHtml = `
+                        <td><span class="coord">${diff.sourceCoord}</span></td>
+                        <td><span class="arrow-icon">=</span></td>
+                        <td><span class="coord">${diff.targetCoord}</span></td>
+                    `;
+                }
+                
+                html += `
+                    <tr class="${rowClass}" data-type="${diff.type}">
+                        <td><span class="type-badge ${badgeClass}">${typeIcons[diff.type]} ${typeLabels[diff.type]}</span></td>
+                        <td><strong>${diff.name}</strong></td>
+                        ${coordHtml}
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            resultArea.innerHTML = html;
+        }
+        
+        function filterDiffs(type, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            document.querySelectorAll('#diffBody tr').forEach(row => {
+                if (type === 'all' || row.dataset.type === type) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        loadBranches();
+    </script>
+</body>
+</html>

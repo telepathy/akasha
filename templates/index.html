@@ -11,9 +11,9 @@
         <aside class="sidebar">
             <div class="logo">📦 Akasha</div>
             <nav class="nav">
-                <a href="/" class="nav-item">首页</a>
+                <a href="/" class="nav-item active">首页</a>
                 <a href="/branches" class="nav-item">分支管理</a>
-                
+                <a href="/compare" class="nav-item">分支比较</a>
             </nav>
             <div class="branch-selector">
                 <select id="currentBranch" onchange="switchBranch(this.value)">
@@ -22,9 +22,10 @@
             </div>
         </aside>
         <main class="main">
-            <header class="header">
+            <div class="page-header">
                 <h1>依赖管理系统</h1>
-            </header>
+                <p>管理 Java 项目的 Gradle 依赖版本</p>
+            </div>
             <div class="content">
                 <div class="card">
                     <h3>分支列表</h3>
@@ -38,7 +39,6 @@
         </main>
     </div>
 
-    <!-- Modal -->
     <div id="modal" class="modal hidden">
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal()">&times;</span>

@@ -160,6 +160,100 @@ func (h *DependencyHandler) GetDepsAt(c *gin.Context) {
 	c.JSON(http.StatusOK, deps)
 }
 
+func (h *DependencyHandler) Compare(c *gin.Context) {
+	sourceBranch := c.Query("source")
+	targetBranch := c.Query("target")
+	if sourceBranch == "" || targetBranch == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing source or target param"})
+		return
+	}
+
+	sourceDeps, err := h.svc.List(sourceBranch)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	targetDeps, err := h.svc.List(targetBranch)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	sourceMap := make(map[string]domain.Dependency)
+	for _, dep := range sourceDeps {
+		sourceMap[dep.Name] = dep
+	}
+	targetMap := make(map[string]domain.Dependency)
+	for _, dep := range targetDeps {
+		targetMap[dep.Name] = dep
+	}
+
+	type DiffItem struct {
+		Name        string `json:"name"`
+		SourceCoord string `json:"sourceCoord"`
+		TargetCoord string `json:"targetCoord"`
+		Type        string `json:"type"`
+	}
+
+	var diffs []DiffItem
+	var added, removed, modified, unchanged int
+
+	for name, sourceDep := range sourceMap {
+		if targetDep, exists := targetMap[name]; exists {
+			if sourceDep.Version == targetDep.Version {
+				diffs = append(diffs, DiffItem{
+					Name:        name,
+					SourceCoord: sourceDep.MavenCoord(),
+					TargetCoord: targetDep.MavenCoord(),
+					Type:        "unchanged",
+				})
+				unchanged++
+			} else {
+				diffs = append(diffs, DiffItem{
+					Name:        name,
+					SourceCoord: sourceDep.MavenCoord(),
+					TargetCoord: targetDep.MavenCoord(),
+					Type:        "modified",
+				})
+				modified++
+			}
+		} else {
+			diffs = append(diffs, DiffItem{
+				Name:        name,
+				SourceCoord: sourceDep.MavenCoord(),
+				TargetCoord: "",
+				Type:        "removed",
+			})
+			removed++
+		}
+	}
+
+	for name, targetDep := range targetMap {
+		if _, exists := sourceMap[name]; !exists {
+			diffs = append(diffs, DiffItem{
+				Name:        name,
+				SourceCoord: "",
+				TargetCoord: targetDep.MavenCoord(),
+				Type:        "added",
+			})
+			added++
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"sourceBranch": sourceBranch,
+		"targetBranch": targetBranch,
+		"diffs":        diffs,
+		"summary": gin.H{
+			"added":     added,
+			"removed":   removed,
+			"modified":  modified,
+			"unchanged": unchanged,
+			"total":     len(diffs),
+		},
+	})
+}
+
 // HistoryBetween 获取某时间段内的依赖变更
 func (h *DependencyHandler) HistoryBetween(c *gin.Context) {
 	name := c.Param("name")
