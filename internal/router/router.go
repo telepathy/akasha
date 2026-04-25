@@ -49,6 +49,7 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		}
 		output := formatDeps(deps)
 		c.Header("Content-Type", "text/plain; charset=utf-8")
+		c.Header("Content-Disposition", "attachment; filename=dependency.gradle")
 		c.String(http.StatusOK, output)
 	})
 
@@ -85,14 +86,9 @@ func formatDeps(deps []domain.Dependency) string {
 	}
 	result := "ext.libraries = [\n"
 	for _, dep := range deps {
-		result += `"` + dep.Name + `"` + "                                                        : "
-		result += `"` + dep.GroupID + ":" + dep.Artifact + ":" + dep.Version + `",`
-		result += " // " + dep.CreatedAt.Format("2006-01-02T15:04:05")
-		if dep.SourceIP != "" {
-			result += ", " + dep.SourceIP
-		}
+		result += `"` + dep.Name + `": "` + dep.GroupID + ":" + dep.Artifact + ":" + dep.Version + `",`
 		if dep.Remark != "" {
-			result += ",备注： " + dep.Remark
+			result += " // " + dep.Remark
 		}
 		result += "\n"
 	}
