@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
 
     steps:
       - name: Checkout code
@@ -41,14 +40,14 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
-          tags: ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
-          labels: ghcr.io/${{ github.repository }}
+          push: false
+          load: true
+          tags: akasha:${{ steps.version.outputs.version }}
 
       - name: Save Docker image
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          docker save -o akasha-${VERSION}.tar ghcr.io/${{ github.repository }}:${VERSION}
+          docker save -o akasha-${VERSION}.tar akasha:${VERSION}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
