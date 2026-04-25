@@ -13,8 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    outputs:
-      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout code
@@ -34,8 +32,9 @@ jobs:
 
       - name: Build binary
         run: |
-          CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o akasha-${{ steps.version.outputs.version }} cmd/server/main.go
-          chmod +x akasha-${{ steps.version.outputs.version }}
+          VERSION=${{ steps.version.outputs.version }}
+          CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o akasha-${VERSION} cmd/server/main.go
+          chmod +x akasha-${VERSION}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -47,35 +46,22 @@ jobs:
           push: false
           load: true
           tags: ghcr.io/telepathy/akasha:${{ steps.version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Save Docker image
         run: |
-          docker save -o akasha-${{ steps.version.outputs.version }}.tar ghcr.io/telepathy/akasha:${{ steps.version.outputs.version }}
+          VERSION=${{ steps.version.outputs.version }}
+          docker save -o akasha-${VERSION}.tar ghcr.io/telepathy/akasha:${VERSION}
 
-      - name: Upload binary artifact
+      - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: akasha-binary
-          path: akasha-${{ steps.version.outputs.version }}
+          path: akasha-*
           retention-days: 30
-
-      - name: Upload Docker artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: akasha-docker
-          path: akasha-${{ steps.version.outputs.version }}.tar
-          retention-days: 30
-
-      - name: Make executable
-        run: chmod +x akasha-*
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            akasha-*
-            akasha-*.tar
+          files: akasha-*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
