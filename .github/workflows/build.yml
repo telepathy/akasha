@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 jobs:
-  build:
+  binary:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -28,37 +28,19 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.version }}
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o akasha-${VERSION}-linux-amd64 cmd/server/main.go
-          chmod +x akasha-${VERSION}-linux-amd64
 
       - name: Build for arm64
         run: |
           VERSION=${{ steps.version.outputs.version }}
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod=vendor -o akasha-${VERSION}-linux-arm64 cmd/server/main.go
-          chmod +x akasha-${VERSION}-linux-arm64
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Make executable
+        run: chmod +x akasha-*
 
-      - name: Build multi-platform Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          load: true
-          tags: akasha:${{ steps.version.outputs.version }}
-          platforms: linux/amd64,linux/arm64
-          labels: |
-            org.opencontainers.image.version=${{ steps.version.outputs.version }}
-
-      - name: Save Docker image
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          docker save -o akasha-${VERSION}.tar akasha:${VERSION}
-
-      - name: Upload artifacts
+      - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
-          name: release-artifacts
+          name: akasha-binaries
           path: akasha-*
           retention-days: 30
 
