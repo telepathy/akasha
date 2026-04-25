@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-  release:
-    types:
-      - created
 
 jobs:
   build:
@@ -33,26 +30,10 @@ jobs:
           CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o akasha-${VERSION} cmd/server/main.go
           chmod +x akasha-${VERSION}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          load: true
-          tags: akasha:${{ steps.version.outputs.version }}
-
-      - name: Save Docker image
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          docker save -o akasha-${VERSION}.tar akasha:${VERSION}
-
-      - name: Upload artifacts
+      - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: release-artifacts
+          name: akasha-binary
           path: akasha-*
           retention-days: 30
 
