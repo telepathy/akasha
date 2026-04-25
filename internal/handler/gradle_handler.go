@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"akasha/internal/domain"
 	"akasha/internal/service"
@@ -10,7 +12,7 @@ import (
 )
 
 type GradleHandler struct {
-	svc       *service.DependencyService
+	svc      *service.DependencyService
 	password string
 }
 
@@ -47,21 +49,28 @@ func formatDeps(deps []domain.Dependency) string {
 		return "ext.libraries = [\n]\n"
 	}
 
-	var result = "ext.libraries = [\n"
-	result += `/**` + "\n*下面是二方包\n**/\n"
+	maxNameLen := 0
+	for _, dep := range deps {
+		if len(dep.Name) > maxNameLen {
+			maxNameLen = len(dep.Name)
+		}
+	}
+
+	var sb strings.Builder
+	sb.WriteString("ext.libraries = [\n")
 
 	for _, dep := range deps {
-		result += `"` + dep.Name + `"` + "                                                        : "
-		result += `"` + dep.GroupID + ":" + dep.Artifact + ":" + dep.Version + `",`
-		result += " // " + dep.CreatedAt.Format("2006-01-02T15:04:05")
-		if dep.SourceIP != "" {
-			result += ", " + dep.SourceIP
-		}
+		padding := strings.Repeat(" ", maxNameLen-len(dep.Name)+2)
+		line := fmt.Sprintf(`  "%s"%s: "%s:%s:%s"`,
+			dep.Name, padding, dep.GroupID, dep.Artifact, dep.Version)
+
 		if dep.Remark != "" {
-			result += ",备注： " + dep.Remark
+			line += fmt.Sprintf(" // %s", dep.Remark)
 		}
-		result += "\n"
+		line += "\n"
+		sb.WriteString(line)
 	}
-	result += "]\n"
-	return result
+
+	sb.WriteString("]\n")
+	return sb.String()
 }

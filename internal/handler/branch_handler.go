@@ -8,11 +8,12 @@ import (
 )
 
 type BranchHandler struct {
-	svc *service.BranchService
+	svc     *service.BranchService
+	depSvc  *service.DependencyService
 }
 
-func NewBranchHandler(svc *service.BranchService) *BranchHandler {
-	return &BranchHandler{svc: svc}
+func NewBranchHandler(svc *service.BranchService, depSvc *service.DependencyService) *BranchHandler {
+	return &BranchHandler{svc: svc, depSvc: depSvc}
 }
 
 func (h *BranchHandler) List(c *gin.Context) {
@@ -109,4 +110,16 @@ func (h *BranchHandler) GetHistory(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, history)
+}
+
+func (h *BranchHandler) GetDepsText(c *gin.Context) {
+	name := c.Param("name")
+	deps, err := h.depSvc.List(name)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	output := formatDeps(deps)
+	c.Header("Content-Type", "text/plain; charset=utf-8")
+	c.String(http.StatusOK, output)
 }

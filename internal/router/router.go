@@ -14,7 +14,7 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
-	branchHandler := handler.NewBranchHandler(branchSvc)
+	branchHandler := handler.NewBranchHandler(branchSvc, depSvc)
 	_ = gradlePassword
 
 	r.LoadHTMLGlob("templates/*")
@@ -26,6 +26,10 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 
 	r.GET("/branches", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "branches.html", nil)
+	})
+
+	r.GET("/compare", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "compare.html", nil)
 	})
 
 	r.GET("/dependencies", func(c *gin.Context) {
@@ -62,6 +66,7 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		api.GET("/dependencies/:name/history-between", depHandler.HistoryBetween)
 		api.POST("/dependencies", depHandler.Create)
 		api.DELETE("/dependencies/:name", depHandler.Delete)
+		api.GET("/dependencies/compare", depHandler.Compare)
 
 		// 分支批量操作
 		api.GET("/branches", branchHandler.List)
@@ -75,6 +80,7 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		// 批量闪回和历史查询
 		api.GET("/branches/:name/deps-at", depHandler.GetDepsAt)
 		api.GET("/branches/:name/history", branchHandler.GetHistory)
+		api.GET("/branches/:name/deps-text", branchHandler.GetDepsText)
 	}
 
 	return r

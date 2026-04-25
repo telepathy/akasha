@@ -13,15 +13,20 @@
             <nav class="nav">
                 <a href="/" class="nav-item">首页</a>
                 <a href="/branches" class="nav-item active">分支管理</a>
-                
+                <a href="/compare" class="nav-item">分支比较</a>
             </nav>
         </aside>
         <main class="main">
-            <header class="header">
-                <h1>分支管理</h1>
-                <button onclick="showCreateBranch()">新建分支</button>
-                <button onclick="showImportBranch()">导入分支</button>
-            </header>
+            <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>分支管理</h1>
+                    <p>创建和管理项目分支</p>
+                </div>
+                <div class="actions" style="margin-top: 0;">
+                    <button onclick="showCreateBranch()">新建分支</button>
+                    <button onclick="showImportBranch()">导入分支</button>
+                </div>
+            </div>
             <div class="content">
                 <div class="table-wrapper">
                     <table class="table">
@@ -35,7 +40,7 @@
                             </tr>
                         </thead>
                         <tbody id="branchTable">
-                            <tr><td colspan="5">加载中...</td></tr>
+                            <tr><td colspan="5" style="text-align: center; padding: 40px; color: #64748b;">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
