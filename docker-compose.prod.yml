@@ -1,0 +1,48 @@
+# Production docker-compose with MySQL
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: akasha-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: akasha
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - akasha-net
+
+  app:
+    build: .
+    container_name: akasha-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DATABASE_HOST=mysql
+      - DATABASE_PORT=3306
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=root123
+      - DATABASE_NAME=akasha
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8080
+    networks:
+      - akasha-net
+    restart: unless-stopped
+
+networks:
+  akasha-net:
+    driver: bridge
+
+volumes:
+  mysql_data:

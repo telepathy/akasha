@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build artifacts
+bin/
+*.exe
+
+# OS
+.DS_Store
+
+# Go
+go.mod
+go.sum
+
+# Vendor is copied into image
+# vendor/
+
+# Test files
+*_test.go
+
+# Docs
+docs/
+README.md
+CLAUDE.md
+basic.md
+
+# Separate dependency.gradle (optional, can be imported)
+# dependency.gradle

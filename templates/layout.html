@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>依赖管理系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="logo">📦 Akasha</div>
+            <nav class="nav">
+                <a href="/" class="nav-item">首页</a>
+                <a href="/branches" class="nav-item">分支管理</a>
+                
+            </nav>
+            <div class="branch-selector">
+                <select id="currentBranch" onchange="switchBranch(this.value)">
+                    <option value="">选择分支</option>
+                </select>
+            </div>
+        </aside>
+        <main class="main">
+            {{template "content" .}}
+        </main>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
