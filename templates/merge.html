@@ -97,10 +97,12 @@
             cursor: pointer;
             font-size: 14px;
             transition: all 0.2s;
+            color: #374151;
         }
         .strategy-btn:hover {
             border-color: #f5576c;
             color: #f5576c;
+            background: #fef2f2;
         }
         .strategy-btn.active {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -393,14 +395,19 @@
             try {
                 const resp = await fetch('/api/v1/branches');
                 branches = await resp.json();
-                const activeBranches = branches.filter(b => b.status !== 'deleted');
                 
                 const sourceSelect = document.getElementById('sourceBranch');
                 const targetSelect = document.getElementById('targetBranch');
                 
-                activeBranches.forEach(b => {
-                    sourceSelect.add(new Option(b.name + (b.status === 'archived' ? ' (已锁定)' : ''), b.name));
-                    targetSelect.add(new Option(b.name + (b.status === 'archived' ? ' (已锁定)' : ''), b.name));
+                branches.forEach(b => {
+                    if (b.status === 'deleted') return;
+                    
+                    const label = b.name + (b.status === 'archived' ? ' (已锁定)' : '');
+                    sourceSelect.add(new Option(label, b.name));
+                    
+                    if (b.status === 'active') {
+                        targetSelect.add(new Option(b.name, b.name));
+                    }
                 });
             } catch (e) {
                 console.error('Failed to load branches:', e);
