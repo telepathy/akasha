@@ -24,12 +24,17 @@ jobs:
         with:
           go-version: '1.25'
 
-      - name: Build binary
+      - name: Build for amd64
         run: |
           VERSION=${{ steps.version.outputs.version }}
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o akasha-${VERSION}-linux-amd64 cmd/server/main.go
+          chmod +x akasha-${VERSION}-linux-amd64
+
+      - name: Build for arm64
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod=vendor -o akasha-${VERSION}-linux-arm64 cmd/server/main.go
-          chmod +x akasha-*
+          chmod +x akasha-${VERSION}-linux-arm64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
