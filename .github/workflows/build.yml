@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
 
     steps:
       - name: Checkout code
@@ -36,20 +37,29 @@ jobs:
           CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o akasha-${VERSION} cmd/server/main.go
           chmod +x akasha-${VERSION}
 
-      - name: Build Docker image
-        if: false  # Docker Hub 不可用，跳过镜像构建
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           load: true
-          tags: telepathy/akasha:${{ steps.version.outputs.version }}
+          tags: ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+          labels: ghcr.io/${{ github.repository }}
 
       - name: Save Docker image
-        if: false  # Docker Hub 不可用，跳过
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          docker save -o akasha-${VERSION}.tar telepathy/akasha:${VERSION}
+          docker save -o akasha-${VERSION}.tar ghcr.io/${{ github.repository }}:${VERSION}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
