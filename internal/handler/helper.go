@@ -3,6 +3,7 @@ package handler
 import (
 	"time"
 
+	"akasha/internal/domain"
 	"gorm.io/gorm"
 )
 
@@ -18,4 +19,20 @@ func parseTime(s string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, gorm.ErrInvalidValue
+}
+
+func FormatDeps(deps []domain.Dependency) string {
+	if len(deps) == 0 {
+		return "ext.libraries = [\n]\n"
+	}
+	result := "ext.libraries = [\n"
+	for _, dep := range deps {
+		result += `"` + dep.Name + `": "` + dep.GroupID + ":" + dep.Artifact + ":" + dep.Version + `",`
+		if dep.Remark != "" {
+			result += " // " + dep.Remark
+		}
+		result += "\n"
+	}
+	result += "]\n"
+	return result
 }

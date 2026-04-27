@@ -156,7 +156,7 @@ func (h *BranchHandler) GetDepsText(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	output := formatDeps(deps)
+	output := FormatDeps(deps)
 	c.Header("Content-Type", "text/plain; charset=utf-8")
 	c.String(http.StatusOK, output)
 }

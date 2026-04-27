@@ -3,20 +3,18 @@ package router
 import (
 	"net/http"
 
-	"akasha/internal/domain"
 	"akasha/internal/handler"
 	"akasha/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, gradlePassword string) *gin.Engine {
+func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService) *gin.Engine {
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
 	branchHandler := handler.NewBranchHandler(branchSvc, depSvc)
 	initHandler := handler.NewInitHandler(initSvc)
-	_ = gradlePassword
 
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "static")
@@ -56,7 +54,7 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		output := formatDeps(deps)
+		output := handler.FormatDeps(deps)
 		c.Header("Content-Type", "text/plain; charset=utf-8")
 		c.Header("Content-Disposition", "attachment; filename=dependency.gradle")
 		c.String(http.StatusOK, output)
@@ -94,18 +92,3 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 	return r
 }
 
-func formatDeps(deps []domain.Dependency) string {
-	if len(deps) == 0 {
-		return "ext.libraries = [\n]\n"
-	}
-	result := "ext.libraries = [\n"
-	for _, dep := range deps {
-		result += `"` + dep.Name + `": "` + dep.GroupID + ":" + dep.Artifact + ":" + dep.Version + `",`
-		if dep.Remark != "" {
-			result += " // " + dep.Remark
-		}
-		result += "\n"
-	}
-	result += "]\n"
-	return result
-}

@@ -151,9 +151,6 @@ database:
 app:
   host: "0.0.0.0"
   port: 8080
-
-gradle:
-  password: "gradle_devops_pwd"
 ```
 
 ### docker-compose.yml
