@@ -46,7 +46,6 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		if branchName == "" {
 			branchName = "main"
 		}
-		// Check if branch is deleted
 		if branchSvc.IsDeleted(branchName) {
 			c.String(http.StatusForbidden, "branch is deleted")
 			return
@@ -86,6 +85,24 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		api.GET("/branches/:name/deps-at", depHandler.GetDepsAt)
 		api.GET("/branches/:name/history", branchHandler.GetHistory)
 		api.GET("/branches/:name/deps-text", branchHandler.GetDepsText)
+		api.GET("/branches/dependency", func(c *gin.Context) {
+			branchName := c.Query("branch")
+			if branchName == "" {
+				branchName = "main"
+			}
+			if branchSvc.IsDeleted(branchName) {
+				c.String(http.StatusForbidden, "branch is deleted")
+				return
+			}
+			deps, err := depSvc.List(branchName)
+			if err != nil {
+				c.String(http.StatusInternalServerError, err.Error())
+				return
+			}
+			output := formatDeps(deps)
+			c.Header("Content-Type", "text/plain; charset=utf-8")
+			c.String(http.StatusOK, output)
+		})
 
 		api.GET("/health/db", initHandler.HealthDB)
 		api.POST("/init", initHandler.InitDB)
