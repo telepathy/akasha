@@ -22,3 +22,5 @@ go.mod
 go.sum
 vendor/
 !.gitkeep
+
+dependency.gradle

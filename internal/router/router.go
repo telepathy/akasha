@@ -10,11 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, gradlePassword string) *gin.Engine {
+func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, gradlePassword string) *gin.Engine {
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
 	branchHandler := handler.NewBranchHandler(branchSvc, depSvc)
+	initHandler := handler.NewInitHandler(initSvc)
 	_ = gradlePassword
 
 	r.LoadHTMLGlob("templates/*")
@@ -85,6 +86,9 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		api.GET("/branches/:name/deps-at", depHandler.GetDepsAt)
 		api.GET("/branches/:name/history", branchHandler.GetHistory)
 		api.GET("/branches/:name/deps-text", branchHandler.GetDepsText)
+
+		api.GET("/health/db", initHandler.HealthDB)
+		api.POST("/init", initHandler.InitDB)
 	}
 
 	return r

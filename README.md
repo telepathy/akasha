@@ -22,133 +22,146 @@ make run
 
 - Web UI: http://localhost:8080
 - 分支管理: http://localhost:8080/branches
-- 分支比较: http://localhost:8080/compare
-- 分支合并: http://localhost:8080/merge
-- Gradle 输出: http://localhost:8080/dependency?branch=main
 
-## 技术栈
+---
 
-- Go 1.25 + Gin
-- MySQL 8.0 + GORM
-- 原生 HTML/CSS/JS
+## 外部调用 API（Java CI 使用）
 
-## 主要功能
+### 获取分支的 Gradle 依赖列表
 
-- **分支管理**: 创建、锁定/解锁、删除
-- **依赖管理**: GAV 版本管理、版本历史
-- **时间查询**: 变更历史查询、闪回查询
-- **分支比较**: 对比两个分支的依赖差异
-- **分支合并**: 支持多种策略的依赖合并
-- **Gradle 输出**: dependency.gradle 格式
-
-## 分支合并策略
-
-### 策略类型
-
-| 策略 | 说明 | 适用场景 |
-|------|------|----------|
-| `keep_higher` | 保留较高版本（默认） | 常规合并，确保版本只升不降 |
-| `force_source` | 强制使用源分支版本 | 源分支是权威来源 |
-| `force_target` | 保留目标分支版本 | 仅添加缺失依赖 |
-
-### 合并规则
-
-| 源分支 | 目标分支 | 处理方式 |
-|--------|----------|----------|
-| 有依赖X v2.0 | 有依赖X v1.0 | 按策略处理（默认升级） |
-| 有依赖X v1.0 | 有依赖X v2.0 | 按策略处理（默认跳过，视为冲突） |
-| 有依赖X | 无依赖X | 可选添加（addMissing=true） |
-| 无依赖X | 有依赖X | **视为冲突**（可能被误删） |
-
-### API
-
-```bash
-# 预览合并
-POST /api/v1/branches/{source}/merge
-{
-    "targetBranch": "main",
-    "strategy": "keep_higher",
-    "addMissing": true,
-    "dryRun": true
-}
-
-# 执行合并
-POST /api/v1/branches/{source}/merge
-{
-    "targetBranch": "main",
-    "strategy": "keep_higher",
-    "addMissing": true,
-    "dryRun": false
-}
+```
+GET /api/v1/branches/{branch}/deps-text
 ```
 
-### 响应格式
+返回纯文本格式的 Gradle 依赖列表，可直接保存为 `dependency.gradle`。
+
+**示例**
+
+```bash
+curl http://localhost:8080/api/v1/branches/main/deps-text
+```
+
+**响应**
+
+```
+ext.libraries = [
+  "spring-core": "org.springframework:spring-core:6.2.7",
+  "spring-beans": "org.springframework:spring-beans:6.2.7",
+  ...
+]
+```
+
+---
+
+### 创建/更新 GAV
+
+```
+POST /api/v1/dependencies
+Content-Type: application/json
+```
+
+**请求参数**
+
+| 参数 | 必填 | 说明 |
+|------|------|------|
+| name | ✅ | 依赖短名称，如 `spring-core` |
+| groupId | ✅ | Group ID，如 `org.springframework` |
+| artifact | ✅ | Artifact ID，如 `spring-core` |
+| version | ✅ | 版本号，如 `6.2.7` |
+| branch | ✅ | 目标分支名，如 `main` |
+| remark | - | 备注信息 |
+
+**示例**
+
+```bash
+curl -X POST http://localhost:8080/api/v1/dependencies \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "spring-core",
+    "groupId": "org.springframework",
+    "artifact": "spring-core",
+    "version": "6.2.7",
+    "branch": "main",
+    "remark": "升级到最新版本"
+  }'
+```
+
+**说明**
+- 如果该依赖已存在，会创建新版本记录（保留历史）
+- 分支状态必须为 `active` 才能更新
+
+---
+
+### 检查数据库状态
+
+```
+GET /api/v1/health/db
+```
+
+检查数据库表结构是否存在、main 分支是否存在、依赖数据是否已导入。
+
+**示例**
+
+```bash
+curl http://localhost:8080/api/v1/health/db
+```
+
+**响应**
 
 ```json
 {
-    "preview": true,
-    "result": {
-        "added": 5,
-        "updated": 3,
-        "skipped": 12,
-        "conflicts": [
-            {
-                "name": "spring-core",
-                "sourceVersion": "6.1.0",
-                "targetVersion": "6.2.0",
-                "reason": "目标版本更高"
-            }
-        ],
-        "details": [
-            "添加: new-lib 1.0.0",
-            "更新: spring-core 5.3.0 -> 6.1.0"
-        ]
-    }
+  "initialized": true,
+  "tables": ["dependencies", "branches"],
+  "mainBranchExists": true,
+  "dependencyCount": 390
 }
 ```
+
+---
+
+### 初始化数据库
+
+```
+POST /api/v1/init
+```
+
+如数据库表结构不存在，自动创建表、创建 main 分支并导入 `dependency.gradle` 数据。
+
+**示例**
+
+```bash
+curl -X POST http://localhost:8080/api/v1/init
+```
+
+**响应**
+
+```json
+{
+  "initialized": true,
+  "tables": ["dependencies", "branches"],
+  "mainBranchExists": true,
+  "dependencyCount": 390
+}
+```
+
+---
 
 ## 命令
 
 ```bash
 make run     # 使用 vendor 运行服务
-make build # 编译
-make test   # 运行测试
-make vendor # 更新 vendor 目录
+make build   # 编译
+make test    # 运行测试
+make vendor  # 更新 vendor 目录
 ```
 
 ## Docker 运行
 
-### 开发模式（使用外部MySQL）
-
 ```bash
-# 启动 MySQL
-docker-compose up -d mysql
-
-# 启动应用
-docker run -p 8080:8080 \
-  -e DATABASE_HOST=host.docker.internal \
-  -e DATABASE_PORT=3306 \
-  -e DATABASE_USERNAME=root \
-  -e DATABASE_PASSWORD=root123 \
-  -e DATABASE_NAME=akasha \
-  akasha:latest
-```
-
-### 生产模式（docker-compose）
-
-```bash
-docker-compose -f docker-compose.prod.yml up -d --build
+docker-compose up -d
 ```
 
 访问 http://localhost:8080
-
-## 分支状态
-
-| 状态 | 说明 | 可添加依赖 | 可锁定 | 可删除 |
-|------|------|----------|--------|--------|
-| active | 正常 | ✅ | ✅ | ✅ |
-| archived | 已锁定 | ❌ | - | ❌ |
-| deleted | 已删除 | ❌ | ❌ | ❌ |
 
 ## 配置
 
