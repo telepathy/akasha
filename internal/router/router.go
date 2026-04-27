@@ -9,12 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService) *gin.Engine {
+func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, adminPassword string) *gin.Engine {
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
 	branchHandler := handler.NewBranchHandler(branchSvc, depSvc)
 	initHandler := handler.NewInitHandler(initSvc)
+	authHandler := handler.NewAuthHandler(adminPassword)
 
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "static")
@@ -23,16 +24,8 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		c.HTML(http.StatusOK, "index.html", nil)
 	})
 
-	r.GET("/branches", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "branches.html", nil)
-	})
-
-	r.GET("/compare", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "compare.html", nil)
-	})
-
-	r.GET("/merge", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "merge.html", nil)
+	r.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", nil)
 	})
 
 	r.GET("/dependencies", func(c *gin.Context) {
@@ -44,7 +37,6 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		if branchName == "" {
 			branchName = "main"
 		}
-		// Check if branch is deleted
 		if branchSvc.IsDeleted(branchName) {
 			c.String(http.StatusForbidden, "branch is deleted")
 			return
@@ -60,6 +52,19 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		c.String(http.StatusOK, output)
 	})
 
+	protected := r.Group("/", authHandler.Middleware())
+	{
+		protected.GET("/branches", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "branches.html", nil)
+		})
+		protected.GET("/compare", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "compare.html", nil)
+		})
+		protected.GET("/merge", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "merge.html", nil)
+		})
+	}
+
 	api := r.Group("/api/v1")
 	{
 		api.GET("/dependencies", depHandler.List)
@@ -71,7 +76,6 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		api.DELETE("/dependencies/:name", depHandler.Delete)
 		api.GET("/dependencies/compare", depHandler.Compare)
 
-		// 分支批量操作
 		api.GET("/branches", branchHandler.List)
 		api.GET("/branches/:name", branchHandler.Get)
 		api.POST("/branches", branchHandler.Create)
@@ -80,15 +84,16 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		api.POST("/branches/:name/archive", branchHandler.Archive)
 		api.POST("/branches/:name/unlock", branchHandler.Unlock)
 
-		// 批量闪回和历史查询
 		api.GET("/branches/:name/deps-at", depHandler.GetDepsAt)
 		api.GET("/branches/:name/history", branchHandler.GetHistory)
 		api.GET("/branches/:name/deps-text", branchHandler.GetDepsText)
 
 		api.GET("/health/db", initHandler.HealthDB)
 		api.POST("/init", initHandler.InitDB)
+
+		api.POST("/login", authHandler.Login)
+		api.POST("/logout", authHandler.Logout)
 	}
 
 	return r
 }
-
