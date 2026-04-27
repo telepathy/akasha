@@ -56,7 +56,7 @@ ext.libraries = [
 #### 方式二：Gradle apply from（动态加载）
 
 ```
-GET /api/v1/branches/dependency?branch={branch}
+GET /dependency?branch={branch}
 ```
 
 专为 Gradle `apply from:` 设计，支持通过 query 参数动态指定分支。
@@ -64,7 +64,7 @@ GET /api/v1/branches/dependency?branch={branch}
 **build.gradle 示例**
 
 ```groovy
-apply from: resources.text.fromInsecureUri("http://localhost:8080/api/v1/branches/dependency?branch=" + depBranch)
+apply from: resources.text.fromInsecureUri("http://localhost:8080/dependency?branch=" + depBranch)
 ```
 
 建议将 `depBranch` 加入 `gradle.properties`：
