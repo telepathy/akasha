@@ -200,9 +200,6 @@ database:
 app:
   host: "0.0.0.0"
   port: 8080
-
-gradle:
-  password: "gradle_devops_pwd"
 ```
 
 ### 配置项说明
@@ -216,7 +213,6 @@ gradle:
 | `database.name` | 数据库名 | akasha_test |
 | `app.host` | 服务监听地址 | 0.0.0.0 |
 | `app.port` | 服务端口 | 8080 |
-| `gradle.password` | Gradle 输出密码（预留） | - |
 
 ### 配置传递方式
 

@@ -32,7 +32,7 @@ func main() {
 		log.Fatal("failed to initialize database:", err)
 	}
 
-	r := router.Setup(depSvc, branchSvc, initSvc, cfg.Gradle.Password)
+	r := router.Setup(depSvc, branchSvc, initSvc)
 
 	log.Printf("starting server at %s", cfg.App.Addr())
 	if err := r.Run(cfg.App.Addr()); err != nil {

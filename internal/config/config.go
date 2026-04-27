@@ -10,7 +10,6 @@ import (
 type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	App      AppConfig      `yaml:"app"`
-	Gradle   GradleConfig  `yaml:"gradle"`
 }
 
 type DatabaseConfig struct {
@@ -33,10 +32,6 @@ type AppConfig struct {
 
 func (a AppConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", a.Host, a.Port)
-}
-
-type GradleConfig struct {
-	Password string `yaml:"password"`
 }
 
 func Load(path string) (*Config, error) {
