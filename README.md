@@ -200,6 +200,9 @@ database:
 app:
   host: "0.0.0.0"
   port: 8080
+
+admin:
+  password: "akasha_admin"
 ```
 
 ### 配置项说明
@@ -213,6 +216,7 @@ app:
 | `database.name` | 数据库名 | akasha_test |
 | `app.host` | 服务监听地址 | 0.0.0.0 |
 | `app.port` | 服务端口 | 8080 |
+| `admin.password` | 管理后台密码（为空则不启用认证） | - |
 
 ### 配置传递方式
 
@@ -231,6 +235,7 @@ app:
 | `DATABASE_NAME` | database.name |
 | `APP_HOST` | app.host |
 | `APP_PORT` | app.port |
+| `ADMIN_PASSWORD` | admin.password |
 
 **Docker 运行示例**：
 

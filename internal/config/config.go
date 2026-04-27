@@ -10,6 +10,11 @@ import (
 type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	App      AppConfig      `yaml:"app"`
+	Admin    AdminConfig    `yaml:"admin"`
+}
+
+type AdminConfig struct {
+	Password string `yaml:"password"`
 }
 
 type DatabaseConfig struct {
@@ -65,6 +70,9 @@ func Load(path string) (*Config, error) {
 	}
 	if appPort := os.Getenv("APP_PORT"); appPort != "" {
 		fmt.Sscanf(appPort, "%d", &cfg.App.Port)
+	}
+	if adminPwd := os.Getenv("ADMIN_PASSWORD"); adminPwd != "" {
+		cfg.Admin.Password = adminPwd
 	}
 
 	return &cfg, nil

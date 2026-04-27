@@ -151,6 +151,9 @@ database:
 app:
   host: "0.0.0.0"
   port: 8080
+
+admin:
+  password: "akasha_admin"
 ```
 
 ### docker-compose.yml
