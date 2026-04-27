@@ -165,4 +165,61 @@ docker-compose up -d
 
 ## 配置
 
-见 `config.yaml`
+### 配置文件 `config.yaml`
+
+```yaml
+database:
+  host: "127.0.0.1"
+  port: 3306
+  username: "root"
+  password: "root123"
+  name: "akasha_test"
+
+app:
+  host: "0.0.0.0"
+  port: 8080
+
+gradle:
+  password: "gradle_devops_pwd"
+```
+
+### 配置项说明
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `database.host` | MySQL 主机地址 | 127.0.0.1 |
+| `database.port` | MySQL 端口 | 3306 |
+| `database.username` | MySQL 用户名 | root |
+| `database.password` | MySQL 密码 | root123 |
+| `database.name` | 数据库名 | akasha_test |
+| `app.host` | 服务监听地址 | 0.0.0.0 |
+| `app.port` | 服务端口 | 8080 |
+| `gradle.password` | Gradle 输出密码（预留） | - |
+
+### 配置传递方式
+
+**方式一：配置文件（默认）**
+
+将 `config.yaml` 放置于可执行文件同级目录，程序启动时自动读取。
+
+**方式二：环境变量（优先级高于配置文件）**
+
+| 环境变量 | 对应配置项 |
+|----------|-----------|
+| `DATABASE_HOST` | database.host |
+| `DATABASE_PORT` | database.port |
+| `DATABASE_USERNAME` | database.username |
+| `DATABASE_PASSWORD` | database.password |
+| `DATABASE_NAME` | database.name |
+| `APP_HOST` | app.host |
+| `APP_PORT` | app.port |
+
+**Docker 运行示例**：
+
+```bash
+docker run -p 8080:8080 \
+  -e DATABASE_HOST=mysql \
+  -e DATABASE_PASSWORD=secret \
+  -e APP_PORT=8080 \
+  akasha:latest
+```
