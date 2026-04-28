@@ -98,6 +98,7 @@ Content-Type: application/json
 ```bash
 curl -X POST http://localhost:8080/api/v1/dependencies \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key-here" \
   -d '{
     "name": "spring-core",
     "groupId": "org.springframework",
@@ -111,6 +112,7 @@ curl -X POST http://localhost:8080/api/v1/dependencies \
 **说明**
 - 如果该依赖已存在，会创建新版本记录（保留历史）
 - 分支状态必须为 `active` 才能更新
+- 需在 Header 中携带 `X-API-Key`（当 `apiKey` 配置启用时）
 
 ---
 
@@ -152,7 +154,8 @@ POST /api/v1/init
 **示例**
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/init
+curl -X POST http://localhost:8080/api/v1/init \
+  -H "X-API-Key: your-api-key-here"
 ```
 
 **响应**
@@ -203,6 +206,8 @@ app:
 
 admin:
   password: "akasha_admin"
+
+apiKey: "your-api-key-here"
 ```
 
 ### 配置项说明
@@ -216,7 +221,8 @@ admin:
 | `database.name` | 数据库名 | akasha_test |
 | `app.host` | 服务监听地址 | 0.0.0.0 |
 | `app.port` | 服务端口 | 8080 |
-| `admin.password` | 管理后台密码（为空则不启用认证） | - |
+| `admin.password` | 管理后台密码（为空则不启用页面认证） | - |
+| `apiKey` | CI 调用 API Key（为空则不启用 API 认证） | - |
 
 ### 配置传递方式
 
@@ -236,6 +242,7 @@ admin:
 | `APP_HOST` | app.host |
 | `APP_PORT` | app.port |
 | `ADMIN_PASSWORD` | admin.password |
+| `API_KEY` | apiKey |
 
 **Docker 运行示例**：
 
@@ -243,6 +250,6 @@ admin:
 docker run -p 8080:8080 \
   -e DATABASE_HOST=mysql \
   -e DATABASE_PASSWORD=secret \
-  -e APP_PORT=8080 \
+  -e API_KEY=ci-secret-key-123 \
   akasha:latest
 ```
