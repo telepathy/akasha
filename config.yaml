@@ -11,3 +11,5 @@ app:
 
 admin:
   password: "akasha_admin"
+
+apiKey: "your-api-key-here"

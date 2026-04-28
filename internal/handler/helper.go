@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"akasha/internal/domain"
@@ -25,14 +27,29 @@ func FormatDeps(deps []domain.Dependency) string {
 	if len(deps) == 0 {
 		return "ext.libraries = [\n]\n"
 	}
-	result := "ext.libraries = [\n"
+
+	maxNameLen := 0
 	for _, dep := range deps {
-		result += `"` + dep.Name + `": "` + dep.GroupID + ":" + dep.Artifact + ":" + dep.Version + `",`
-		if dep.Remark != "" {
-			result += " // " + dep.Remark
+		if len(dep.Name) > maxNameLen {
+			maxNameLen = len(dep.Name)
 		}
-		result += "\n"
 	}
-	result += "]\n"
-	return result
+
+	var sb strings.Builder
+	sb.WriteString("ext.libraries = [\n")
+
+	for _, dep := range deps {
+		padding := strings.Repeat(" ", maxNameLen-len(dep.Name)+2)
+		line := fmt.Sprintf(`  "%s"%s: "%s:%s:%s"`,
+			dep.Name, padding, dep.GroupID, dep.Artifact, dep.Version)
+
+		if dep.Remark != "" {
+			line += fmt.Sprintf(" // %s", dep.Remark)
+		}
+		line += "\n"
+		sb.WriteString(line)
+	}
+
+	sb.WriteString("]\n")
+	return sb.String()
 }

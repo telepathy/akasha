@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"gopkg.in/yaml.v3"
 )
@@ -11,6 +12,7 @@ type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	App      AppConfig      `yaml:"app"`
 	Admin    AdminConfig    `yaml:"admin"`
+	APIKey   string         `yaml:"apiKey"`
 }
 
 type AdminConfig struct {
@@ -54,7 +56,11 @@ func Load(path string) (*Config, error) {
 		cfg.Database.Host = host
 	}
 	if port := os.Getenv("DATABASE_PORT"); port != "" {
-		fmt.Sscanf(port, "%d", &cfg.Database.Port)
+		p, err := strconv.Atoi(port)
+		if err != nil {
+			return nil, fmt.Errorf("invalid DATABASE_PORT: %s", port)
+		}
+		cfg.Database.Port = p
 	}
 	if user := os.Getenv("DATABASE_USERNAME"); user != "" {
 		cfg.Database.Username = user
@@ -69,10 +75,17 @@ func Load(path string) (*Config, error) {
 		cfg.App.Host = appHost
 	}
 	if appPort := os.Getenv("APP_PORT"); appPort != "" {
-		fmt.Sscanf(appPort, "%d", &cfg.App.Port)
+		p, err := strconv.Atoi(appPort)
+		if err != nil {
+			return nil, fmt.Errorf("invalid APP_PORT: %s", appPort)
+		}
+		cfg.App.Port = p
 	}
 	if adminPwd := os.Getenv("ADMIN_PASSWORD"); adminPwd != "" {
 		cfg.Admin.Password = adminPwd
+	}
+	if apiKey := os.Getenv("API_KEY"); apiKey != "" {
+		cfg.APIKey = apiKey
 	}
 
 	return &cfg, nil

@@ -9,13 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, adminPassword string) *gin.Engine {
+func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, adminPassword, apiKey string) *gin.Engine {
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
 	branchHandler := handler.NewBranchHandler(branchSvc, depSvc)
 	initHandler := handler.NewInitHandler(initSvc)
-	authHandler := handler.NewAuthHandler(adminPassword)
+	authHandler := handler.NewAuthHandler(adminPassword, apiKey)
 
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "static")
@@ -72,27 +72,32 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		api.GET("/dependencies/:name/history", depHandler.History)
 		api.GET("/dependencies/:name/at", depHandler.GetAt)
 		api.GET("/dependencies/:name/history-between", depHandler.HistoryBetween)
-		api.POST("/dependencies", depHandler.Create)
-		api.DELETE("/dependencies/:name", depHandler.Delete)
 		api.GET("/dependencies/compare", depHandler.Compare)
 
 		api.GET("/branches", branchHandler.List)
 		api.GET("/branches/:name", branchHandler.Get)
-		api.POST("/branches", branchHandler.Create)
-		api.DELETE("/branches/:name", branchHandler.Delete)
-		api.POST("/branches/:name/merge", branchHandler.Merge)
-		api.POST("/branches/:name/archive", branchHandler.Archive)
-		api.POST("/branches/:name/unlock", branchHandler.Unlock)
-
 		api.GET("/branches/:name/deps-at", depHandler.GetDepsAt)
 		api.GET("/branches/:name/history", branchHandler.GetHistory)
 		api.GET("/branches/:name/deps-text", branchHandler.GetDepsText)
 
 		api.GET("/health/db", initHandler.HealthDB)
-		api.POST("/init", initHandler.InitDB)
 
 		api.POST("/login", authHandler.Login)
 		api.POST("/logout", authHandler.Logout)
+
+		write := api.Group("/", authHandler.RequireAuth())
+		{
+			write.POST("/dependencies", depHandler.Create)
+			write.DELETE("/dependencies/:name", depHandler.Delete)
+
+			write.POST("/branches", branchHandler.Create)
+			write.DELETE("/branches/:name", branchHandler.Delete)
+			write.POST("/branches/:name/merge", branchHandler.Merge)
+			write.POST("/branches/:name/archive", branchHandler.Archive)
+			write.POST("/branches/:name/unlock", branchHandler.Unlock)
+
+			write.POST("/init", initHandler.InitDB)
+		}
 	}
 
 	return r

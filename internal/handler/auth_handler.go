@@ -12,13 +12,15 @@ import (
 
 type AuthHandler struct {
 	password string
+	apiKey   string
 	sessions map[string]time.Time
 	mu       sync.RWMutex
 }
 
-func NewAuthHandler(password string) *AuthHandler {
+func NewAuthHandler(password, apiKey string) *AuthHandler {
 	return &AuthHandler{
 		password: password,
+		apiKey:   apiKey,
 		sessions: make(map[string]time.Time),
 	}
 }
@@ -84,6 +86,44 @@ func (h *AuthHandler) Middleware() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func (h *AuthHandler) RequireAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if h.password == "" && h.apiKey == "" {
+			c.Next()
+			return
+		}
+
+		if h.checkSession(c) || h.checkAPIKey(c) {
+			c.Next()
+			return
+		}
+
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.Abort()
+	}
+}
+
+func (h *AuthHandler) checkSession(c *gin.Context) bool {
+	if h.password == "" {
+		return true
+	}
+	token, err := c.Cookie("akasha_session")
+	if err != nil || token == "" {
+		return false
+	}
+	h.mu.RLock()
+	expiry, exists := h.sessions[token]
+	h.mu.RUnlock()
+	return exists && time.Now().Before(expiry)
+}
+
+func (h *AuthHandler) checkAPIKey(c *gin.Context) bool {
+	if h.apiKey == "" {
+		return false
+	}
+	return c.GetHeader("X-API-Key") == h.apiKey
 }
 
 func generateToken() string {
