@@ -52,13 +52,14 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 		c.String(http.StatusOK, output)
 	})
 
+	r.GET("/compare", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "compare.html", nil)
+	})
+
 	protected := r.Group("/", authHandler.Middleware())
 	{
 		protected.GET("/branches", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "branches.html", nil)
-		})
-		protected.GET("/compare", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "compare.html", nil)
 		})
 		protected.GET("/merge", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "merge.html", nil)
