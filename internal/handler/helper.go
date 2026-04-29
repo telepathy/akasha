@@ -40,7 +40,7 @@ func FormatDeps(deps []domain.Dependency) string {
 
 	for _, dep := range deps {
 		padding := strings.Repeat(" ", maxNameLen-len(dep.Name)+2)
-		line := fmt.Sprintf(`  "%s"%s: "%s:%s:%s"`,
+		line := fmt.Sprintf(`  "%s"%s: "%s:%s:%s",`,
 			dep.Name, padding, dep.GroupID, dep.Artifact, dep.Version)
 
 		if dep.Remark != "" {
