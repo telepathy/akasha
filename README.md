@@ -208,6 +208,8 @@ admin:
   password: "akasha_admin"
 
 apiKey: "your-api-key-here"
+
+externalHost: "http://localhost:8080"
 ```
 
 ### 配置项说明
@@ -223,6 +225,7 @@ apiKey: "your-api-key-here"
 | `app.port` | 服务端口 | 8080 |
 | `admin.password` | 管理后台密码（为空则不启用页面认证） | - |
 | `apiKey` | CI 调用 API Key（为空则不启用 API 认证） | - |
+| `externalHost` | 外部访问地址（首页依赖URL显示用） | - |
 
 ### 配置传递方式
 
@@ -243,6 +246,7 @@ apiKey: "your-api-key-here"
 | `APP_PORT` | app.port |
 | `ADMIN_PASSWORD` | admin.password |
 | `API_KEY` | apiKey |
+| `EXTERNAL_HOST` | externalHost |
 
 **Docker 运行示例**：
 
