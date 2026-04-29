@@ -1,6 +1,8 @@
 package router
 
 import (
+	"embed"
+	"html/template"
 	"net/http"
 
 	"akasha/internal/handler"
@@ -9,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, adminPassword, apiKey string) *gin.Engine {
+func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, adminPassword, apiKey string, templateFS, staticFS embed.FS) *gin.Engine {
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
@@ -17,8 +19,9 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 	initHandler := handler.NewInitHandler(initSvc)
 	authHandler := handler.NewAuthHandler(adminPassword, apiKey)
 
-	r.LoadHTMLGlob("templates/*")
-	r.Static("/static", "static")
+	templ := template.Must(template.New("").ParseFS(templateFS, "*.html"))
+	r.SetHTMLTemplate(templ)
+	r.StaticFS("/static", http.FS(staticFS))
 
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", nil)
