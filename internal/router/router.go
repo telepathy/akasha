@@ -26,15 +26,15 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 	r.StaticFS("/static", http.FS(staticSub))
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "templates/index.html", nil)
+		c.HTML(http.StatusOK, "index.html", nil)
 	})
 
 	r.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "templates/login.html", nil)
+		c.HTML(http.StatusOK, "login.html", nil)
 	})
 
 	r.GET("/dependencies", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "templates/index.html", nil)
+		c.HTML(http.StatusOK, "index.html", nil)
 	})
 
 	r.GET("/dependency", func(c *gin.Context) {
@@ -58,16 +58,16 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 	})
 
 	r.GET("/compare", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "templates/compare.html", nil)
+		c.HTML(http.StatusOK, "compare.html", nil)
 	})
 
 	protected := r.Group("/", authHandler.Middleware())
 	{
 		protected.GET("/branches", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "templates/branches.html", nil)
+			c.HTML(http.StatusOK, "branches.html", nil)
 		})
 		protected.GET("/merge", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "templates/merge.html", nil)
+			c.HTML(http.StatusOK, "merge.html", nil)
 		})
 	}
 
