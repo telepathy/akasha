@@ -61,6 +61,7 @@ function selectBranch(name, status) {
     currentBranch = name;
     currentBranchStatus = status;
     loadDependencies(name);
+    updateDepUrl();
     // 只更新选中状态，不重新渲染整个列表
     updateBranchListActive(name);
 }
@@ -381,4 +382,26 @@ function updateDep(e, name) {
         .then(res => res.json())
         .then(d => { closeModal(); loadDependencies(currentBranch); })
         .catch(err => alert('保存失败: ' + err.message));
+}
+
+function updateDepUrl() {
+    const input = document.getElementById('depUrl');
+    if (!input) return;
+    const host = window.AKASHA_HOST || window.location.origin;
+    if (currentBranch) {
+        input.value = host + '/dependency?branch=' + currentBranch;
+    } else {
+        input.value = '请先选择分支';
+    }
+}
+
+function copyDepUrl() {
+    const input = document.getElementById('depUrl');
+    if (!input || input.value === '请先选择分支') return;
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.querySelector('.dep-url-box button');
+        const original = btn.textContent;
+        btn.textContent = '已复制';
+        setTimeout(() => btn.textContent = original, 1500);
+    });
 }

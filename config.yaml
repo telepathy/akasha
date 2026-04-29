@@ -13,3 +13,5 @@ admin:
   password: "akasha_admin"
 
 apiKey: "your-api-key-here"
+
+externalHost: "http://localhost:8080"

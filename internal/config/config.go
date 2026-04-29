@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	Database DatabaseConfig `yaml:"database"`
-	App      AppConfig      `yaml:"app"`
-	Admin    AdminConfig    `yaml:"admin"`
-	APIKey   string         `yaml:"apiKey"`
+	Database     DatabaseConfig `yaml:"database"`
+	App          AppConfig      `yaml:"app"`
+	Admin        AdminConfig    `yaml:"admin"`
+	APIKey       string         `yaml:"apiKey"`
+	ExternalHost string         `yaml:"externalHost"`
 }
 
 type AdminConfig struct {
@@ -86,6 +87,9 @@ func Load(path string) (*Config, error) {
 	}
 	if apiKey := os.Getenv("API_KEY"); apiKey != "" {
 		cfg.APIKey = apiKey
+	}
+	if extHost := os.Getenv("EXTERNAL_HOST"); extHost != "" {
+		cfg.ExternalHost = extHost
 	}
 
 	return &cfg, nil

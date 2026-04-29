@@ -41,6 +41,10 @@
                 </div>
                 <div class="card">
                     <h3>最新依赖</h3>
+                    <div class="dep-url-box" style="margin-bottom: 16px; display: flex; align-items: center;">
+                        <input type="text" id="depUrl" readonly value="请先选择分支" style="flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; background: #f5f5f5;">
+                        <button onclick="copyDepUrl()" style="margin-left: 8px; padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">复制</button>
+                    </div>
                     <div id="depList" class="list">请先选择分支</div>
                 </div>
             </div>
@@ -54,6 +58,9 @@
         </div>
     </div>
 
+    <script>
+        window.AKASHA_HOST = "{{.host}}" || window.location.origin;
+    </script>
     <script src="/static/js/app.js"></script>
     <script>
         async function init() { await loadBranches(); }

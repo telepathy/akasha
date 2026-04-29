@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, adminPassword, apiKey string, templateFS, staticFS embed.FS) *gin.Engine {
+func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, adminPassword, apiKey, externalHost string, templateFS, staticFS embed.FS) *gin.Engine {
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
@@ -26,7 +26,7 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 	r.StaticFS("/static", http.FS(staticSub))
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
+		c.HTML(http.StatusOK, "index.html", gin.H{"host": externalHost})
 	})
 
 	r.GET("/login", func(c *gin.Context) {

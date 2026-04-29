@@ -33,7 +33,7 @@ func main() {
 		log.Fatal("failed to initialize database:", err)
 	}
 
-	r := router.Setup(depSvc, branchSvc, initSvc, cfg.Admin.Password, cfg.APIKey, akasha.TemplateFS, akasha.StaticFS)
+	r := router.Setup(depSvc, branchSvc, initSvc, cfg.Admin.Password, cfg.APIKey, cfg.ExternalHost, akasha.TemplateFS, akasha.StaticFS)
 
 	log.Printf("starting server at %s", cfg.App.Addr())
 	if err := r.Run(cfg.App.Addr()); err != nil {
