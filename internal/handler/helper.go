@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"akasha/internal/domain"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -21,6 +22,14 @@ func parseTime(s string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, gorm.ErrInvalidValue
+}
+
+func respondError(c *gin.Context, status int, msg string) {
+	c.JSON(status, gin.H{"error": msg})
+}
+
+func respondJSON(c *gin.Context, status int, data interface{}) {
+	c.JSON(status, data)
 }
 
 func FormatDeps(deps []domain.Dependency) string {

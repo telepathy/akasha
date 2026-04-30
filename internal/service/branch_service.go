@@ -33,7 +33,7 @@ func (s *BranchService) Create(name, baseBranch string) error {
 }
 
 func (s *BranchService) Delete(name string) error {
-	return s.branchRepo.UpdateStatus(name, "deleted")
+	return s.branchRepo.UpdateStatus(name, domain.StatusDeleted)
 }
 
 func (s *BranchService) IsDeleted(name string) bool {
@@ -41,15 +41,15 @@ func (s *BranchService) IsDeleted(name string) bool {
 	if err != nil {
 		return true
 	}
-	return branch.Status == "deleted"
+	return branch.Status == domain.StatusDeleted
 }
 
 func (s *BranchService) Archive(name string) error {
-	return s.branchRepo.UpdateStatus(name, "archived")
+	return s.branchRepo.UpdateStatus(name, domain.StatusArchived)
 }
 
 func (s *BranchService) Unlock(name string) error {
-	return s.branchRepo.UpdateStatus(name, "active")
+	return s.branchRepo.UpdateStatus(name, domain.StatusActive)
 }
 
 func (s *BranchService) IsArchived(name string) bool {
@@ -57,7 +57,7 @@ func (s *BranchService) IsArchived(name string) bool {
 	if err != nil {
 		return false
 	}
-	return branch.Status == "archived"
+	return branch.Status == domain.StatusArchived
 }
 
 func (s *BranchService) CanModify(name string) bool {
@@ -65,7 +65,7 @@ func (s *BranchService) CanModify(name string) bool {
 	if err != nil {
 		return false
 	}
-	return branch.Status == "active"
+	return branch.Status == domain.StatusActive
 }
 
 type MergeStrategy string

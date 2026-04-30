@@ -15,20 +15,8 @@ func NewDependencyRepo(db *gorm.DB) *DependencyRepo {
 	return &DependencyRepo{db: db}
 }
 
-func (r *DependencyRepo) DB() *gorm.DB {
-	return r.db
-}
-
 func (r *DependencyRepo) Create(d *domain.Dependency) error {
 	return r.db.Create(d).Error
-}
-
-func (r *DependencyRepo) FindByBranch(branch string) ([]domain.Dependency, error) {
-	var deps []domain.Dependency
-	err := r.db.Where("branch = ? AND deleted_at IS NULL", branch).
-		Order("name").
-		Find(&deps).Error
-	return deps, err
 }
 
 func (r *DependencyRepo) FindLatestByBranch(branch string) ([]domain.Dependency, error) {

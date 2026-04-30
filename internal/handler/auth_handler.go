@@ -1,10 +1,14 @@
 package handler
 
 import (
-	"crypto/rand"
-	"encoding/hex"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
-	"sync"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,15 +17,28 @@ import (
 type AuthHandler struct {
 	password string
 	apiKey   string
-	sessions map[string]time.Time
-	mu       sync.RWMutex
+	jwtSecret string
 }
 
-func NewAuthHandler(password, apiKey string) *AuthHandler {
+type jwtHeader struct {
+	Alg string `json:"alg"`
+	Typ string `json:"typ"`
+}
+
+type jwtPayload struct {
+	Sub string `json:"sub"`
+	Iat int64  `json:"iat"`
+	Exp int64  `json:"exp"`
+}
+
+func NewAuthHandler(password, apiKey, jwtSecret string) *AuthHandler {
+	if jwtSecret != "" && len(jwtSecret) < 32 {
+		log.Printf("warning: jwtSecret is only %d chars, should be at least 32 for security", len(jwtSecret))
+	}
 	return &AuthHandler{
-		password: password,
-		apiKey:   apiKey,
-		sessions: make(map[string]time.Time),
+		password:  password,
+		apiKey:    apiKey,
+		jwtSecret: jwtSecret,
 	}
 }
 
@@ -39,23 +56,18 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token := generateToken()
-	h.mu.Lock()
-	h.sessions[token] = time.Now().Add(24 * time.Hour)
-	h.mu.Unlock()
+	token, err := h.generateJWT()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "failed to generate token"})
+		return
+	}
 
-	c.SetCookie("akasha_session", token, 86400, "/", "", false, true)
+	c.SetCookie("akasha_jwt", token, 86400, "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	token, _ := c.Cookie("akasha_session")
-	if token != "" {
-		h.mu.Lock()
-		delete(h.sessions, token)
-		h.mu.Unlock()
-	}
-	c.SetCookie("akasha_session", "", -1, "/", "", false, true)
+	c.SetCookie("akasha_jwt", "", -1, "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
@@ -66,25 +78,13 @@ func (h *AuthHandler) Middleware() gin.HandlerFunc {
 			return
 		}
 
-		token, err := c.Cookie("akasha_session")
-		if err != nil || token == "" {
-			c.Redirect(http.StatusFound, "/login")
-			c.Abort()
+		if h.validateJWTFromCookie(c) {
+			c.Next()
 			return
 		}
 
-		h.mu.RLock()
-		expiry, exists := h.sessions[token]
-		h.mu.RUnlock()
-
-		if !exists || time.Now().After(expiry) {
-			c.SetCookie("akasha_session", "", -1, "/", "", false, true)
-			c.Redirect(http.StatusFound, "/login")
-			c.Abort()
-			return
-		}
-
-		c.Next()
+		c.Redirect(http.StatusFound, "/login")
+		c.Abort()
 	}
 }
 
@@ -95,7 +95,7 @@ func (h *AuthHandler) RequireAuth() gin.HandlerFunc {
 			return
 		}
 
-		if h.checkSession(c) || h.checkAPIKey(c) {
+		if h.validateJWTFromCookie(c) || h.checkAPIKey(c) {
 			c.Next()
 			return
 		}
@@ -105,18 +105,74 @@ func (h *AuthHandler) RequireAuth() gin.HandlerFunc {
 	}
 }
 
-func (h *AuthHandler) checkSession(c *gin.Context) bool {
+func (h *AuthHandler) generateJWT() (string, error) {
+	header := jwtHeader{Alg: "HS256", Typ: "JWT"}
+	payload := jwtPayload{
+		Sub: "admin",
+		Iat: time.Now().Unix(),
+		Exp: time.Now().Add(24 * time.Hour).Unix(),
+	}
+
+	headerJSON, err := json.Marshal(header)
+	if err != nil {
+		return "", err
+	}
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	headerB64 := base64.RawURLEncoding.EncodeToString(headerJSON)
+	payloadB64 := base64.RawURLEncoding.EncodeToString(payloadJSON)
+
+	signingInput := headerB64 + "." + payloadB64
+	signature := h.sign(signingInput)
+
+	return signingInput + "." + signature, nil
+}
+
+func (h *AuthHandler) validateJWTFromCookie(c *gin.Context) bool {
 	if h.password == "" {
 		return true
 	}
-	token, err := c.Cookie("akasha_session")
+	token, err := c.Cookie("akasha_jwt")
 	if err != nil || token == "" {
 		return false
 	}
-	h.mu.RLock()
-	expiry, exists := h.sessions[token]
-	h.mu.RUnlock()
-	return exists && time.Now().Before(expiry)
+	return h.validateJWT(token)
+}
+
+func (h *AuthHandler) validateJWT(token string) bool {
+	if h.jwtSecret == "" {
+		return false
+	}
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return false
+	}
+
+	expectedSig := h.sign(parts[0] + "." + parts[1])
+	if !hmac.Equal([]byte(expectedSig), []byte(parts[2])) {
+		return false
+	}
+
+	payloadJSON, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return false
+	}
+
+	var payload jwtPayload
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		return false
+	}
+
+	return time.Now().Unix() < payload.Exp
+}
+
+func (h *AuthHandler) sign(input string) string {
+	mac := hmac.New(sha256.New, []byte(h.jwtSecret))
+	_, _ = mac.Write([]byte(input))
+	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 }
 
 func (h *AuthHandler) checkAPIKey(c *gin.Context) bool {
@@ -126,8 +182,18 @@ func (h *AuthHandler) checkAPIKey(c *gin.Context) bool {
 	return c.GetHeader("X-API-Key") == h.apiKey
 }
 
-func generateToken() string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	return hex.EncodeToString(b)
+func (h *AuthHandler) getClaims(token string) (*jwtPayload, error) {
+	if !h.validateJWT(token) {
+		return nil, errors.New("invalid token")
+	}
+	parts := strings.Split(token, ".")
+	payloadJSON, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, err
+	}
+	var payload jwtPayload
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		return nil, err
+	}
+	return &payload, nil
 }

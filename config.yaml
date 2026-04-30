@@ -12,6 +12,9 @@ app:
 admin:
   password: "akasha_admin"
 
+auth:
+  jwtSecret: "change-me-to-a-random-string-at-least-32-characters-long"
+
 apiKey: "your-api-key-here"
 
 externalHost: "http://localhost:8080"

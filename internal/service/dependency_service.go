@@ -57,7 +57,7 @@ func (s *DependencyService) Delete(name, branch string) error {
 	if err != nil {
 		return err
 	}
-	if branchInfo.Status == "active" {
+	if branchInfo.Status == domain.StatusActive {
 		return &ErrForbidden{msg: "只能在创建中的分支上删除条目"}
 	}
 	return s.depRepo.Delete(name, branch)

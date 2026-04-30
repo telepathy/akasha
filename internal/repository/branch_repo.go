@@ -15,10 +15,6 @@ func NewBranchRepo(db *gorm.DB) *BranchRepo {
 	return &BranchRepo{db: db}
 }
 
-func (r *BranchRepo) DB() *gorm.DB {
-	return r.db
-}
-
 func (r *BranchRepo) Create(b *domain.Branch) error {
 	return r.db.Create(b).Error
 }
@@ -26,13 +22,13 @@ func (r *BranchRepo) Create(b *domain.Branch) error {
 func (r *BranchRepo) FindAll() ([]domain.Branch, error) {
 	var branches []domain.Branch
 	// Include active and archived, exclude deleted
-	err := r.db.Where("status IN (?, ?)", "active", "archived").Order("created_at DESC").Find(&branches).Error
+	err := r.db.Where("status IN (?, ?)", domain.StatusActive, domain.StatusArchived).Order("created_at DESC").Find(&branches).Error
 	return branches, err
 }
 
 func (r *BranchRepo) FindByName(name string) (*domain.Branch, error) {
 	var branch domain.Branch
-	err := r.db.Where("name = ? AND status != ?", name, "deleted").First(&branch).Error
+	err := r.db.Where("name = ? AND status != ?", name, domain.StatusDeleted).First(&branch).Error
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +37,7 @@ func (r *BranchRepo) FindByName(name string) (*domain.Branch, error) {
 
 func (r *BranchRepo) Exists(name string) bool {
 	var count int64
-	r.db.Model(&domain.Branch{}).Where("name = ? AND status != ?", name, "deleted").Count(&count)
+	r.db.Model(&domain.Branch{}).Where("name = ? AND status != ?", name, domain.StatusDeleted).Count(&count)
 	return count > 0
 }
 
@@ -61,7 +57,7 @@ func (r *BranchRepo) CreateBranch(name, baseBranch string) error {
 	newBranch := &domain.Branch{
 		Name:       name,
 		BaseBranch: baseBranch,
-		Status:     "creating",
+		Status:     domain.StatusCreating,
 		CreatedAt:  time.Now(),
 	}
 	if err := tx.Create(newBranch).Error; err != nil {
@@ -79,7 +75,7 @@ func (r *BranchRepo) CreateBranch(name, baseBranch string) error {
 
 	if err := tx.Model(&domain.Branch{}).
 		Where("name = ?", name).
-		Update("status", "active").Error; err != nil {
+		Update("status", domain.StatusActive).Error; err != nil {
 		tx.Rollback()
 		return err
 	}

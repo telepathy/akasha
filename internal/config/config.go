@@ -12,12 +12,17 @@ type Config struct {
 	Database     DatabaseConfig `yaml:"database"`
 	App          AppConfig      `yaml:"app"`
 	Admin        AdminConfig    `yaml:"admin"`
+	Auth         AuthConfig     `yaml:"auth"`
 	APIKey       string         `yaml:"apiKey"`
 	ExternalHost string         `yaml:"externalHost"`
 }
 
 type AdminConfig struct {
 	Password string `yaml:"password"`
+}
+
+type AuthConfig struct {
+	JWTSecret string `yaml:"jwtSecret"`
 }
 
 type DatabaseConfig struct {
@@ -43,7 +48,6 @@ func (a AppConfig) Addr() string {
 }
 
 func Load(path string) (*Config, error) {
-	// Try to load from file first
 	var cfg Config
 	data, err := os.ReadFile(path)
 	if err == nil {
@@ -52,45 +56,54 @@ func Load(path string) (*Config, error) {
 		}
 	}
 
-	// Override with environment variables if set
-	if host := os.Getenv("DATABASE_HOST"); host != "" {
-		cfg.Database.Host = host
-	}
-	if port := os.Getenv("DATABASE_PORT"); port != "" {
-		p, err := strconv.Atoi(port)
-		if err != nil {
-			return nil, fmt.Errorf("invalid DATABASE_PORT: %s", port)
-		}
-		cfg.Database.Port = p
-	}
-	if user := os.Getenv("DATABASE_USERNAME"); user != "" {
-		cfg.Database.Username = user
-	}
-	if pwd := os.Getenv("DATABASE_PASSWORD"); pwd != "" {
-		cfg.Database.Password = pwd
-	}
-	if db := os.Getenv("DATABASE_NAME"); db != "" {
-		cfg.Database.Name = db
-	}
-	if appHost := os.Getenv("APP_HOST"); appHost != "" {
-		cfg.App.Host = appHost
-	}
-	if appPort := os.Getenv("APP_PORT"); appPort != "" {
-		p, err := strconv.Atoi(appPort)
-		if err != nil {
-			return nil, fmt.Errorf("invalid APP_PORT: %s", appPort)
-		}
-		cfg.App.Port = p
-	}
-	if adminPwd := os.Getenv("ADMIN_PASSWORD"); adminPwd != "" {
-		cfg.Admin.Password = adminPwd
-	}
-	if apiKey := os.Getenv("API_KEY"); apiKey != "" {
-		cfg.APIKey = apiKey
-	}
-	if extHost := os.Getenv("EXTERNAL_HOST"); extHost != "" {
-		cfg.ExternalHost = extHost
+	if err := envOverride(&cfg); err != nil {
+		return nil, err
 	}
 
 	return &cfg, nil
+}
+
+func envOverride(cfg *Config) error {
+	if v := os.Getenv("DATABASE_HOST"); v != "" {
+		cfg.Database.Host = v
+	}
+	if v := os.Getenv("DATABASE_PORT"); v != "" {
+		p, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("invalid DATABASE_PORT: %s", v)
+		}
+		cfg.Database.Port = p
+	}
+	if v := os.Getenv("DATABASE_USERNAME"); v != "" {
+		cfg.Database.Username = v
+	}
+	if v := os.Getenv("DATABASE_PASSWORD"); v != "" {
+		cfg.Database.Password = v
+	}
+	if v := os.Getenv("DATABASE_NAME"); v != "" {
+		cfg.Database.Name = v
+	}
+	if v := os.Getenv("APP_HOST"); v != "" {
+		cfg.App.Host = v
+	}
+	if v := os.Getenv("APP_PORT"); v != "" {
+		p, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("invalid APP_PORT: %s", v)
+		}
+		cfg.App.Port = p
+	}
+	if v := os.Getenv("ADMIN_PASSWORD"); v != "" {
+		cfg.Admin.Password = v
+	}
+	if v := os.Getenv("API_KEY"); v != "" {
+		cfg.APIKey = v
+	}
+	if v := os.Getenv("EXTERNAL_HOST"); v != "" {
+		cfg.ExternalHost = v
+	}
+	if v := os.Getenv("JWT_SECRET"); v != "" {
+		cfg.Auth.JWTSecret = v
+	}
+	return nil
 }

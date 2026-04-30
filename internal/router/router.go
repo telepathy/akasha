@@ -12,21 +12,30 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, adminPassword, apiKey, externalHost string, templateFS, staticFS embed.FS) *gin.Engine {
+type RouterConfig struct {
+	Password     string
+	APIKey       string
+	JWTSecret    string
+	ExternalHost string
+	TemplateFS   embed.FS
+	StaticFS     embed.FS
+}
+
+func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, cfg RouterConfig) *gin.Engine {
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
 	branchHandler := handler.NewBranchHandler(branchSvc, depSvc)
 	initHandler := handler.NewInitHandler(initSvc)
-	authHandler := handler.NewAuthHandler(adminPassword, apiKey)
+	authHandler := handler.NewAuthHandler(cfg.Password, cfg.APIKey, cfg.JWTSecret)
 
-	templ := template.Must(template.New("").ParseFS(templateFS, "templates/*.html"))
+	templ := template.Must(template.New("").ParseFS(cfg.TemplateFS, "templates/*.html"))
 	r.SetHTMLTemplate(templ)
-	staticSub, _ := fs.Sub(staticFS, "static")
+	staticSub, _ := fs.Sub(cfg.StaticFS, "static")
 	r.StaticFS("/static", http.FS(staticSub))
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{"host": externalHost})
+		c.HTML(http.StatusOK, "index.html", gin.H{"host": cfg.ExternalHost})
 	})
 
 	r.GET("/login", func(c *gin.Context) {

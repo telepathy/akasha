@@ -6,6 +6,13 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	StatusActive    = "active"
+	StatusArchived  = "archived"
+	StatusDeleted   = "deleted"
+	StatusCreating  = "creating"
+)
+
 type Dependency struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	Name      string         `gorm:"index;size:128" json:"name"`

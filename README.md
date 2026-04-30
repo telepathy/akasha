@@ -207,6 +207,9 @@ app:
 admin:
   password: "akasha_admin"
 
+auth:
+  jwtSecret: "change-me-to-a-random-string-at-least-32-characters-long"
+
 apiKey: "your-api-key-here"
 
 externalHost: "http://localhost:8080"
@@ -224,6 +227,7 @@ externalHost: "http://localhost:8080"
 | `app.host` | 服务监听地址 | 0.0.0.0 |
 | `app.port` | 服务端口 | 8080 |
 | `admin.password` | 管理后台密码（为空则不启用页面认证） | - |
+| `auth.jwtSecret` | JWT 签名密钥（为空则使用随机值，多实例需一致） | - |
 | `apiKey` | CI 调用 API Key（为空则不启用 API 认证） | - |
 | `externalHost` | 外部访问地址（首页依赖URL显示用） | - |
 
@@ -245,6 +249,7 @@ externalHost: "http://localhost:8080"
 | `APP_HOST` | app.host |
 | `APP_PORT` | app.port |
 | `ADMIN_PASSWORD` | admin.password |
+| `JWT_SECRET` | auth.jwtSecret |
 | `API_KEY` | apiKey |
 | `EXTERNAL_HOST` | externalHost |
 

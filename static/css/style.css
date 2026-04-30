@@ -1209,3 +1209,33 @@ button.btn-sm, .btn.btn-sm {
         --status-deleted-bg: #7f1d1d;
     }
 }
+
+.dep-url-box {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.dep-url-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 13px;
+    background: var(--bg-input);
+}
+
+.dep-url-btn {
+    margin-left: 8px;
+    padding: 8px 16px;
+    background: var(--info);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.dep-url-btn:hover {
+    opacity: 0.9;
+}
