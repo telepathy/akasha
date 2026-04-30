@@ -51,6 +51,10 @@ func (r *BranchRepo) Delete(name string) error {
 	return r.db.Where("name = ?", name).Delete(&domain.Branch{}).Error
 }
 
+func (r *BranchRepo) Truncate() error {
+	return r.db.Exec("DELETE FROM branches").Error
+}
+
 func (r *BranchRepo) CreateBranch(name, baseBranch string) error {
 	tx := r.db.Begin()
 

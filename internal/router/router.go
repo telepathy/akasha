@@ -21,13 +21,14 @@ type RouterConfig struct {
 	StaticFS     embed.FS
 }
 
-func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, cfg RouterConfig) *gin.Engine {
+func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, initSvc *service.InitService, backupSvc *service.BackupService, cfg RouterConfig) *gin.Engine {
 	r := gin.Default()
 
 	depHandler := handler.NewDependencyHandler(depSvc, branchSvc)
 	branchHandler := handler.NewBranchHandler(branchSvc, depSvc)
 	initHandler := handler.NewInitHandler(initSvc)
 	authHandler := handler.NewAuthHandler(cfg.Password, cfg.APIKey, cfg.JWTSecret)
+	backupHandler := handler.NewBackupHandler(backupSvc)
 
 	templ := template.Must(template.New("").ParseFS(cfg.TemplateFS, "templates/*.html"))
 	r.SetHTMLTemplate(templ)
@@ -112,6 +113,9 @@ func Setup(depSvc *service.DependencyService, branchSvc *service.BranchService, 
 			write.POST("/branches/:name/unlock", branchHandler.Unlock)
 
 			write.POST("/init", initHandler.InitDB)
+
+			write.GET("/backup/export", backupHandler.Export)
+			write.POST("/backup/restore", backupHandler.Restore)
 		}
 	}
 

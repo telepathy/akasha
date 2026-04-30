@@ -28,12 +28,13 @@ func main() {
 	depSvc := service.NewDependencyService(depRepo, branchRepo)
 	branchSvc := service.NewBranchService(branchRepo, depRepo)
 	initSvc := service.NewInitService(db, depRepo, branchRepo)
+	backupSvc := service.NewBackupService(depRepo, branchRepo, db)
 
 	if _, err := initSvc.Initialize(); err != nil {
 		log.Fatal("failed to initialize database:", err)
 	}
 
-	r := router.Setup(depSvc, branchSvc, initSvc, router.RouterConfig{
+	r := router.Setup(depSvc, branchSvc, initSvc, backupSvc, router.RouterConfig{
 		Password:     cfg.Admin.Password,
 		APIKey:       cfg.APIKey,
 		JWTSecret:    cfg.Auth.JWTSecret,

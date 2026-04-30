@@ -171,6 +171,64 @@ curl -X POST http://localhost:8080/api/v1/init \
 
 ---
 
+### 导出备份
+
+```
+GET /api/v1/backup/export
+```
+
+导出所有分支和所有依赖记录为 JSON 备份文件。
+
+**示例**
+
+```bash
+curl -H "X-API-Key: your-api-key-here" \
+  http://localhost:8080/api/v1/backup/export \
+  -o akasha-backup.json
+```
+
+**说明**
+- 备份文件包含所有分支定义和全部依赖历史记录
+- 文件名格式：`akasha-backup-YYYYMMDD-HHMMSS.json`
+- 需在 Header 中携带 `X-API-Key`（当 `apiKey` 配置启用时）
+
+---
+
+### 恢复备份
+
+```
+POST /api/v1/backup/restore
+Content-Type: multipart/form-data
+```
+
+从备份文件恢复全部数据（清空现有数据后重新导入）。
+
+**示例**
+
+```bash
+curl -X POST -H "X-API-Key: your-api-key-here" \
+  -F "file=@akasha-backup.json" \
+  http://localhost:8080/api/v1/backup/restore
+```
+
+**响应**
+
+```json
+{
+  "restored": true,
+  "branches": 2,
+  "dependencies": 788
+}
+```
+
+**说明**
+- 恢复操作会**清空现有所有数据**，然后重新导入备份内容
+- 建议在恢复前手动导出当前数据作为备份
+- 备份文件版本必须与当前系统兼容（当前版本 `1.0`）
+- 需在 Header 中携带 `X-API-Key`（当 `apiKey` 配置启用时）
+
+---
+
 ## 命令
 
 ```bash

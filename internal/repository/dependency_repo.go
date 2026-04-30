@@ -106,3 +106,13 @@ func (r *DependencyRepo) Delete(name, branch string) error {
 	return r.db.Where("name = ? AND branch = ?", name, branch).
 		Delete(&domain.Dependency{}).Error
 }
+
+func (r *DependencyRepo) FindAll() ([]domain.Dependency, error) {
+	var deps []domain.Dependency
+	err := r.db.Where("deleted_at IS NULL").Order("branch, name, created_at").Find(&deps).Error
+	return deps, err
+}
+
+func (r *DependencyRepo) Truncate() error {
+	return r.db.Exec("DELETE FROM dependencies").Error
+}
