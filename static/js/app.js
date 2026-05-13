@@ -398,10 +398,32 @@ function updateDepUrl() {
 function copyDepUrl() {
     const input = document.getElementById('depUrl');
     if (!input || input.value === '请先选择分支') return;
-    navigator.clipboard.writeText(input.value).then(() => {
-        const btn = document.querySelector('.dep-url-box button');
-        const original = btn.textContent;
+ const btn = document.querySelector('.dep-url-box button');
+    const original = btn.textContent;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value).then(() => {
+            btn.textContent = '已复制';
+            setTimeout(() => btn.textContent = original, 1500);
+        }).catch(() => fallbackCopy(input, btn, original));
+    } else {
+        fallbackCopy(input, btn, original);
+    }
+}
+
+function fallbackCopy(input, btn, original) {
+    const textarea = document.createElement('textarea');
+    textarea.value = input.value;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
         btn.textContent = '已复制';
         setTimeout(() => btn.textContent = original, 1500);
-    });
+    } catch (e) {
+        alert('复制失败，请手动复制');
+    }
+    document.body.removeChild(textarea);
 }
