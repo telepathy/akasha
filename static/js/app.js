@@ -164,20 +164,79 @@ function viewBranchDeps(name) {
 
 function viewBranchHistory(name) {
     showModal(`<h2>分支 ${name} 变更历史</h2>
-        <form onsubmit="queryHistory(event, '${name}')">
-            <div class="form-group" style="display:flex;gap:10px">
-                <div><label>开始时间</label><input type="datetime-local" name="startAt"></div>
-                <div><label>结束时间</label><input type="datetime-local" name="endAt"></div>
+        <form id="historyRangeForm" onsubmit="queryHistory(event, '${name}')">
+            <div class="quick-ranges">
+                <button type="button" class="quick-range-btn" onclick="setHistoryRange('day')">最近一天</button>
+                <button type="button" class="quick-range-btn" onclick="setHistoryRange('week')">最近一周</button>
+                <button type="button" class="quick-range-btn" onclick="setHistoryRange('month')">最近一个月</button>
+            </div>
+            <div class="date-range-grid">
+                <div class="form-group">
+                    <label>开始日期</label>
+                    <input type="date" name="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label>开始时间</label>
+                    <input type="time" name="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label>结束日期</label>
+                    <input type="date" name="endDate" required>
+                </div>
+                <div class="form-group">
+                    <label>结束时间</label>
+                    <input type="time" name="endTime" required>
+                </div>
             </div>
             <div class="form-actions"><button type="submit">查询</button><button type="button" onclick="closeModal()">关闭</button></div>
         </form><div id="historyResult"></div>`);
+    setHistoryRange('day');
+}
+
+function formatDatePart(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatTimePart(date) {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
+function setHistoryRange(range) {
+    const form = document.getElementById('historyRangeForm');
+    if (!form) return;
+
+    const end = new Date();
+    const start = new Date(end);
+    if (range === 'day') {
+        start.setDate(start.getDate() - 1);
+    } else if (range === 'week') {
+        start.setDate(start.getDate() - 7);
+    } else if (range === 'month') {
+        start.setMonth(start.getMonth() - 1);
+    }
+
+    form.startDate.value = formatDatePart(start);
+    form.startTime.value = formatTimePart(start);
+    form.endDate.value = formatDatePart(end);
+    form.endTime.value = formatTimePart(end);
+}
+
+function getHistoryDateTime(form, prefix) {
+    const date = form[`${prefix}Date`].value;
+    const time = form[`${prefix}Time`].value;
+    return date && time ? `${date}T${time}` : '';
 }
 
 function queryHistory(e, name) {
     e.preventDefault();
     const form = e.target;
-    const startAt = form.startAt.value;
-    const endAt = form.endAt.value;
+    const startAt = getHistoryDateTime(form, 'start');
+    const endAt = getHistoryDateTime(form, 'end');
     if (!startAt || !endAt) { alert('请选择开始和结束时间'); return; }
     // 先获取所有依赖名称，然后对每个依赖按时间范围查询
     fetch(API_BASE + '/dependencies?branch=' + name).then(r => r.json()).then(deps => {
