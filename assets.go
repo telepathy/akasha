@@ -5,5 +5,5 @@ import "embed"
 //go:embed all:templates/*
 var TemplateFS embed.FS
 
-//go:embed all:static/css/* all:static/js/* all:static/*.svg
+//go:embed all:static/css/* all:static/js/* all:static/*
 var StaticFS embed.FS
