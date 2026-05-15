@@ -454,6 +454,33 @@ button.btn-sm, .btn.btn-sm {
     margin-top: 24px;
 }
 
+.quick-ranges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 18px 0 20px;
+}
+
+.quick-range-btn {
+    padding: 8px 14px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.quick-range-btn:hover {
+    background: var(--accent-primary);
+    color: #fff;
+}
+
+.date-range-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+    gap: 16px;
+}
+
 .alert {
     padding: 14px 18px;
     border-radius: 8px;
