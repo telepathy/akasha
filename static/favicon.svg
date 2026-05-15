@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Akasha">
+  <defs>
+    <linearGradient id="skyfire" x1="9" y1="55" x2="55" y2="9" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00d4ff"/>
+      <stop offset="0.52" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#ff3d81"/>
+    </linearGradient>
+    <radialGradient id="core" cx="32" cy="30" r="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.35" stop-color="#dff8ff"/>
+      <stop offset="1" stop-color="#53e7ff"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#08111f"/>
+  <path d="M32 7 56 20v24L32 57 8 44V20Z" fill="url(#skyfire)"/>
+  <path d="M32 13 50 23v18L32 51 14 41V23Z" fill="#0b1222"/>
+  <path d="M32 18 45 44h-8l-2.1-5.2H24.8L22.7 44H19l13-26Zm-4.8 14.6h5.6L30 25.5l-2.8 7.1Z" fill="url(#core)"/>
+  <path d="M17 24h9M38 24h9M17 40h9M38 40h9" stroke="#79f2ff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="17" cy="24" r="3.5" fill="#ff3d81"/>
+  <circle cx="47" cy="24" r="3.5" fill="#00d4ff"/>
+  <circle cx="17" cy="40" r="3.5" fill="#00d4ff"/>
+  <circle cx="47" cy="40" r="3.5" fill="#ff3d81"/>
+</svg>
